@@ -35,7 +35,7 @@ module.exports = new EntitySchema({
       length: 10,
       nullable: false,
     },
-    birthdate: {
+    birth_date: {
       type: "date",
       nullable: false,
     },
