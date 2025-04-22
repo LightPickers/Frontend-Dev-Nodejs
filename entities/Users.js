@@ -33,11 +33,11 @@ module.exports = new EntitySchema({
     gender: {
       type: "varchar",
       length: 10,
-      nullable: false,
+      nullable: true, // 資料庫清空資料再改回 false
     },
     birth_date: {
       type: "date",
-      nullable: false,
+      nullable: true, // 資料庫清空資料再改回 false
     },
     phone: {
       type: "varchar",
