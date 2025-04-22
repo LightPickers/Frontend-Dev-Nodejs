@@ -1,6 +1,5 @@
 const express = require("express");
 const path = require("path");
-const signup = require("./routes/signup");
 const usersRouter = require("./routes/users");
 
 const createApp = () => {
@@ -10,7 +9,6 @@ const createApp = () => {
   app.use(express.urlencoded({ extended: false }));
   app.use(express.static(path.join(__dirname, "public")));
 
-  app.use("/", signup);
   app.use("/api/v1/users", usersRouter);
 
   // eslint-disable-next-line no-unused-vars
