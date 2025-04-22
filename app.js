@@ -1,6 +1,8 @@
 const express = require('express');
 const path = require('path');
+const signup = require('./routes/signup');
 const usersRouter = require('./routes/users');
+
 
 const createApp = () => {
     const app = express();
@@ -9,15 +11,17 @@ const createApp = () => {
     app.use(express.urlencoded({ extended: false }));
     app.use(express.static(path.join(__dirname, 'public')));
 
+    app.use('/', signup);
     app.use('/users', usersRouter);
 
     // eslint-disable-next-line no-unused-vars
     app.use((err, req, res, next) => {
-        req.log?.error?.(err);
-        const statusCode = err.status || 500;
+        const statusCode = err.statusCode || 500;
+        
         res.status(statusCode).json({
-            status: statusCode === 500 ? 'error' : 'failed',
-            message: err.message || '伺服器錯誤'
+            status: err.status || 'error',
+            message: err.message,
+            error: process.env.NODE_ENV === 'development' ? err : {}
         });
     });
 
