@@ -1,7 +1,7 @@
 const { dataSource } = require("../../db/data-source");
 const appError = require("../../utils/appError");
 const ERROR_MESSAGES = require("../../utils/errorMessages");
-const { ZIPCODE_PATTERN } = require("../../utils/validatePattern");
+const { ZIPCODE_PATTERN } = require("../../utils/validatePatterns");
 const {
   isUndefined,
   isValidString,
