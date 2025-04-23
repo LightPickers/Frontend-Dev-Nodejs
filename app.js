@@ -11,6 +11,15 @@ const createApp = () => {
 
   app.use("/api/v1/users", usersRouter);
 
+  //404
+  app.use((req, res, next) => {
+    res.status(404).json({
+        status: 'error',
+        message: "無此路由",
+    })
+    return
+  });
+
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
