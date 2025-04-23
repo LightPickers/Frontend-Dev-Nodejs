@@ -1,6 +1,6 @@
 //utils/generateJWT.js
 
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
 
 /**
  * create JSON Web Token

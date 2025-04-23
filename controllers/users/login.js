@@ -4,6 +4,7 @@ const { dataSource } = require('../../db/data-source');
 const { isUndefined, isValidString, isValidEmail, isValidPassword } = require('../../utils/validUtils');
 const appError = require('../../utils/appError');
 const ERROR_MESSAGES = require('../../utils/errorMessages');
+const generateJWT = require('../../utils/generateJWT');
 
 async function login(req, res, next) {
     const { email, password } = req.body
@@ -34,7 +35,7 @@ async function login(req, res, next) {
         return next(new appError(400, ERROR_MESSAGES.USER_NOT_FOUND_OR_PASSWORD_FALSE));
     }
     
-    logger.info(`使用者資料: ${JSON.stringify(existingUser)}`)
+    // logger.info(`使用者資料: ${JSON.stringify(existingUser)}`)
     const isMatch = await bcrypt.compare(password, existingUser.password)
     if (!isMatch) {
         return next(new appError(400, ERROR_MESSAGES.USER_NOT_FOUND_OR_PASSWORD_FALSE));
