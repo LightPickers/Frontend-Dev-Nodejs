@@ -10,7 +10,7 @@ const {
 } = require("../../utils/validUtils");
 
 async function updateUserProfile(req, res, next) {
-  const { id } = req.params;
+  const { userId } = req.params;
   const {
     name,
     photo,
@@ -23,6 +23,8 @@ async function updateUserProfile(req, res, next) {
   } = req.body;
 
   if (
+    isUndefined(userId) ||
+    !isValidString(userId) ||
     isUndefined(name) ||
     !isValidString(name) ||
     isUndefined(phone) ||
@@ -48,7 +50,7 @@ async function updateUserProfile(req, res, next) {
 
   const userRepo = dataSource.getRepository("Users");
   const findUser = await userRepo.findOne({
-    where: { id },
+    where: { id: userId },
   });
 
   if (!findUser) {
@@ -57,7 +59,7 @@ async function updateUserProfile(req, res, next) {
 
   const updateUser = await userRepo.update(
     {
-      id,
+      id: userId,
     },
     {
       name,
@@ -76,7 +78,7 @@ async function updateUserProfile(req, res, next) {
   }
 
   const result = await userRepo.findOne({
-    where: { id },
+    where: { id: userId },
   });
   res.status(200).json({
     status: "success",
