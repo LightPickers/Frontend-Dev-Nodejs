@@ -17,7 +17,7 @@ router.put("/profile/:userId", handleErrorAsync(updateUserProfile));
 router.post("/login", handleErrorAsync(login));
 
 // middleware
-router.post("auth/verify", handleErrorAsync(verifyAuth));
+router.post("/auth/verify", handleErrorAsync(verifyAuth));
 
 router.use((req, res, next) => {
   next(new AppError(404, "Route not found"));

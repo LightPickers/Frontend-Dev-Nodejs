@@ -11,7 +11,7 @@ module.exports = new EntitySchema({
     },
     role_id: {
       type: 'uuid',
-      nullable: false,
+      nullable: true, // 資料庫清空資料再改回 false
     },
     name: {
       type: "varchar",
