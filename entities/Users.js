@@ -9,6 +9,10 @@ module.exports = new EntitySchema({
       type: "uuid",
       generated: "uuid",
     },
+    role_id: {
+      type: 'uuid',
+      nullable: false,
+    },
     name: {
       type: "varchar",
       length: 50,
@@ -71,4 +75,15 @@ module.exports = new EntitySchema({
       nullable: false,
     },
   },
+  relations: {
+    Roles: {
+        target: 'Roles',
+        type: 'many-to-one',
+        joinColumn: {
+            name: 'role_id',
+            referencedColumnName: 'id',
+            foreignKeyConstraintName: 'user_role_id_fk'
+        }
+    }
+  }
 });
