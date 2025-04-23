@@ -9,10 +9,12 @@ const signup = require("../controllers/users/signup");
 const getUserProfile = require("../controllers/users/getUserProfile");
 const updateUserProfile = require("../controllers/users/updateUserProfile");
 const verifyAuth = require("../controllers/users/verifyAuth");
+const login = require("../controllers/users/login");
 
 router.post("/signup", handleErrorAsync(signup));
 router.get("/profile", handleErrorAsync(getUserProfile));
 router.put("/profile/:userId", handleErrorAsync(updateUserProfile));
+router.post("/login", handleErrorAsync(login));
 
 // middleware
 router.post("auth/verify", handleErrorAsync(verifyAuth));
