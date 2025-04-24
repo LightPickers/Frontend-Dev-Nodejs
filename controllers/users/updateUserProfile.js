@@ -7,6 +7,7 @@ const {
   isValidString,
   isValidName,
   isValidPhone,
+  isValidBirthDate,
 } = require("../../utils/validUtils");
 
 async function updateUserProfile(req, res, next) {
@@ -46,6 +47,10 @@ async function updateUserProfile(req, res, next) {
   }
   if (!address_district || !address_detail) {
     return next(appError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+  }
+
+  if (!birth_date || !isValidBirthDate(birth_date)) {
+    return next(appError(400, ERROR_MESSAGES.BIRTH_DATE_NOT_RULE));
   }
 
   const userRepo = dataSource.getRepository("Users");

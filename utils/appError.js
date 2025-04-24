@@ -1,7 +1,12 @@
-const appError = (status, errMessage, next) => {
-  const error = new Error(errMessage);
-  error.status = status;
-  return error;
-};
+class AppError extends Error {
+  constructor(statusCode, message) {
+    super(message);
+    this.statusCode = statusCode;
+    this.status = statusCode >= 400 && statusCode < 500 ? "fail" : "error";
+    this.isOperational = true;
 
-module.exports = appError;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+module.exports = AppError;
