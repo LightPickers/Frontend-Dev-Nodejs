@@ -10,8 +10,8 @@ module.exports = new EntitySchema({
       generated: "uuid",
     },
     role_id: {
-      type: 'uuid',
-      nullable: true, // 資料庫清空資料再改回 false
+      type: "uuid",
+      nullable: false,
     },
     name: {
       type: "varchar",
@@ -37,11 +37,11 @@ module.exports = new EntitySchema({
     gender: {
       type: "varchar",
       length: 10,
-      nullable: true, // 資料庫清空資料再改回 false
+      nullable: false,
     },
     birth_date: {
       type: "date",
-      nullable: true, // 資料庫清空資料再改回 false
+      nullable: false,
     },
     phone: {
       type: "varchar",
@@ -77,13 +77,13 @@ module.exports = new EntitySchema({
   },
   relations: {
     Roles: {
-        target: 'Roles',
-        type: 'many-to-one',
-        joinColumn: {
-            name: 'role_id',
-            referencedColumnName: 'id',
-            foreignKeyConstraintName: 'user_role_id_fk'
-        }
-    }
-  }
+      target: "Roles",
+      type: "many-to-one",
+      joinColumn: {
+        name: "role_id",
+        referencedColumnName: "id",
+        foreignKeyConstraintName: "user_role_id_fk",
+      },
+    },
+  },
 });

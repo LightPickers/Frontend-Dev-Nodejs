@@ -7,15 +7,16 @@ const {
   isValidString,
   isValidName,
   isValidPhone,
+  isValidBirthDate,
 } = require("../../utils/validUtils");
 
 async function updateUserProfile(req, res, next) {
-  const { id } = req.params;
+  const { userId } = req.params;
   const {
     name,
     photo,
     gender,
-    birthdate,
+    birth_date,
     phone,
     address_zipcode,
     address_district,
@@ -23,6 +24,8 @@ async function updateUserProfile(req, res, next) {
   } = req.body;
 
   if (
+    isUndefined(userId) ||
+    !isValidString(userId) ||
     isUndefined(name) ||
     !isValidString(name) ||
     isUndefined(phone) ||
@@ -46,9 +49,13 @@ async function updateUserProfile(req, res, next) {
     return next(appError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
 
+  if (!birth_date || !isValidBirthDate(birth_date)) {
+    return next(appError(400, ERROR_MESSAGES.BIRTH_DATE_NOT_RULE));
+  }
+
   const userRepo = dataSource.getRepository("Users");
   const findUser = await userRepo.findOne({
-    where: { id },
+    where: { id: userId },
   });
 
   if (!findUser) {
@@ -57,13 +64,13 @@ async function updateUserProfile(req, res, next) {
 
   const updateUser = await userRepo.update(
     {
-      id,
+      id: userId,
     },
     {
       name,
       photo,
       gender,
-      birthdate,
+      birth_date,
       phone,
       address_zipcode,
       address_district,
@@ -76,7 +83,7 @@ async function updateUserProfile(req, res, next) {
   }
 
   const result = await userRepo.findOne({
-    where: { id },
+    where: { id: userId },
   });
   res.status(200).json({
     status: "success",

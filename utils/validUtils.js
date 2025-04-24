@@ -28,6 +28,29 @@ function isValidName(value) {
   return PATTERN_RULE.NAME_PATTERN.test(value);
 }
 
+function isValidBirthDate(value) {
+  if (!PATTERN_RULE.DATE_PATTERN.test(value)) return false;
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return false;
+  }
+
+  const now = new Date();
+  if (date > now) return false;
+
+  const age = now.getFullYear() - year;
+  if (age < 0 || age > 120) return false;
+
+  return true;
+}
+
 module.exports = {
   isUndefined,
   isValidString,
@@ -37,4 +60,5 @@ module.exports = {
   isValidUrl,
   isValidPhone,
   isValidName,
+  isValidBirthDate,
 };
