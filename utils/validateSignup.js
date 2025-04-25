@@ -1,6 +1,10 @@
 const ERROR_MESSAGES = require("./errorMessages");
 const PATTERN_RULE = require("./validatePatterns");
-const { isValidEmail, isValidPassword } = require("./validUtils");
+const {
+  isValidEmail,
+  isValidPassword,
+  isValidBirthDate,
+} = require("./validUtils");
 
 function validateSignup(data) {
   const errors = {};
@@ -14,26 +18,22 @@ function validateSignup(data) {
   }
 
   if (!data.name?.match(PATTERN_RULE.NAME_PATTERN)) {
-    errors.name = ERROR_MESSAGES.FIELDS_INCORRECT;
+    errors.name = ERROR_MESSAGES.NAME_NOT_RULE;
   }
 
   if (!data.phone?.match(PATTERN_RULE.PHONE_PATTERN)) {
-    errors.phone = ERROR_MESSAGES.FIELDS_INCORRECT;
+    errors.phone = ERROR_MESSAGES.PHONE_NOT_RULE;
   }
 
-  if (data.address) {
-    if (
-      !data.address.zipcode ||
-      !data.address.zipcode.match(PATTERN_RULE.ZIPCODE_PATTERN)
-    ) {
-      errors.zipcode = ERROR_MESSAGES.FIELDS_INCORRECT;
-    }
-    if (!data.address.district) {
-      errors.district = ERROR_MESSAGES.FIELDS_INCORRECT;
-    }
-    if (!data.address.street_address) {
-      errors.street_address = ERROR_MESSAGES.FIELDS_INCORRECT;
-    }
+  if (!isValidBirthDate(data.birth_date)) {
+    errors.birth_date = ERROR_MESSAGES.BIRTH_DATE_NOT_RULE;
+  }
+
+  if (!data.address_zipcode?.match(PATTERN_RULE.ZIPCODE_PATTERN)) {
+    errors.zipcode = ERROR_MESSAGES.ZIPCODE_NOT_RULE;
+  }
+  if (!data.address_detail) {
+    errors.address_detail = ERROR_MESSAGES.ADDRESS_NOT_RULE;
   }
 
   return {

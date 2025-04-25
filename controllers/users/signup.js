@@ -2,7 +2,6 @@
 const bcrypt = require("bcrypt");
 const { dataSource } = require("../../db/data-source");
 const validateSignup = require("../../utils/validateSignup");
-const appError = require("../../utils/appError");
 const ERROR_MESSAGES = require("../../utils/errorMessages");
 
 async function signup(req, res, next) {
@@ -10,14 +9,15 @@ async function signup(req, res, next) {
     const validation = validateSignup(req.body);
     if (!validation.isValid) {
       return res.status(400).json({
-        status: "failed",
-        errors: validation.errors,
+        status: "false",
+        message: validation.errors,
       });
     }
 
     const userData = {
       ...req.body,
       is_banned: false,
+      role_id: "84f0e762-ff1c-4197-b525-c8ec22de8dd5",
     };
 
     const userRepository = dataSource.getRepository("Users");
@@ -26,7 +26,10 @@ async function signup(req, res, next) {
     });
 
     if (existingUser) {
-      return next(appError(400, ERROR_MESSAGES.EMAIL_ALREADY_USED));
+      return res.status(409).json({
+        status: "false",
+        message: ERROR_MESSAGES.EMAIL_ALREADY_USED,
+      });
     }
 
     const hashedPassword = await bcrypt.hash(userData.password, 10);
@@ -38,7 +41,7 @@ async function signup(req, res, next) {
     await userRepository.save(newUser);
 
     res.status(201).json({
-      status: "success",
+      status: "true",
       message: "註冊成功",
     });
   } catch (error) {
