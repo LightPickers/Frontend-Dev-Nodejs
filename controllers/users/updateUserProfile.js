@@ -91,10 +91,22 @@ async function updateUserProfile(req, res, next) {
   }
 
   const result = await userRepo.findOne({
+    select: [
+      "name",
+      "email",
+      "phone",
+      "gender",
+      "birth_date",
+      "address_zipcode",
+      "address_district",
+      "address_detail",
+      "photo",
+    ],
     where: { id: userId },
   });
   res.status(200).json({
-    status: "success",
+    status: "true",
+    message: "資料更新成功",
     data: result,
   });
 }
