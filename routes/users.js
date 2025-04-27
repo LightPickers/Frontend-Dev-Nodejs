@@ -13,7 +13,8 @@ const login = require("../controllers/users/login");
 
 router.post("/signup", handleErrorAsync(signup));
 router.get("/profile", handleErrorAsync(getUserProfile));
-router.put("/profile/:userId", handleErrorAsync(updateUserProfile));
+// router.put("/profile/:userId", handleErrorAsync(updateUserProfile));
+router.put("/profile", handleErrorAsync(updateUserProfile));
 router.post("/login", handleErrorAsync(login));
 
 // middleware
