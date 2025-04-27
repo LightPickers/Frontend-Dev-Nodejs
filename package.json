@@ -18,11 +18,13 @@
   "homepage": "https://github.com/LightPickers/Frontend-Dev-Nodejs#readme",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.14.1",
     "pino": "^9.6.0",
+    "pino-http": "^10.4.0",
     "pino-pretty": "^13.0.0",
     "typeorm": "^0.3.22",
     "uuid": "^11.1.0",
