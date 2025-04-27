@@ -1,17 +1,19 @@
 const { dataSource } = require("../../db/data-source");
-const appError = require("../../utils/appError");
+const AppError = require("../../utils/appError");
 const ERROR_MESSAGES = require("../../utils/errorMessages");
 const { ZIPCODE_PATTERN } = require("../../utils/validatePatterns");
 const {
   isUndefined,
   isValidString,
   isValidName,
+  isValidUrl,
   isValidPhone,
   isValidBirthDate,
 } = require("../../utils/validUtils");
 
 async function updateUserProfile(req, res, next) {
-  const { userId } = req.params;
+  // const { userId } = req.params;
+  const { userId } = req.body;
   const {
     name,
     photo,
@@ -28,29 +30,35 @@ async function updateUserProfile(req, res, next) {
     !isValidString(userId) ||
     isUndefined(name) ||
     !isValidString(name) ||
+    isUndefined(gender) ||
+    !isValidString(gender) ||
     isUndefined(phone) ||
     !isValidString(phone)
   ) {
-    return next(appError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+    return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
 
   if (!isValidName(name)) {
-    return next(appError(400, ERROR_MESSAGES.NAME_NOT_RULE));
+    return next(new AppError(400, ERROR_MESSAGES.NAME_NOT_RULE));
   }
 
   if (!isValidPhone(phone)) {
-    return next(appError(400, ERROR_MESSAGES.PHONE_NOT_RULE));
+    return next(new AppError(400, ERROR_MESSAGES.PHONE_NOT_RULE));
+  }
+
+  if (!isValidUrl(photo)) {
+    return next(new AppError(400, ERROR_MESSAGES.PROFILE_PHOTO_URL_INCORRECT));
   }
 
   if (!address_zipcode || !address_zipcode.match(ZIPCODE_PATTERN)) {
-    return next(appError(400, ERROR_MESSAGES.ZIPCODE_NOT_RULE));
+    return next(new AppError(400, ERROR_MESSAGES.ZIPCODE_NOT_RULE));
   }
   if (!address_district || !address_detail) {
-    return next(appError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+    return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
 
   if (!birth_date || !isValidBirthDate(birth_date)) {
-    return next(appError(400, ERROR_MESSAGES.BIRTH_DATE_NOT_RULE));
+    return next(new AppError(400, ERROR_MESSAGES.BIRTH_DATE_NOT_RULE));
   }
 
   const userRepo = dataSource.getRepository("Users");
@@ -59,7 +67,7 @@ async function updateUserProfile(req, res, next) {
   });
 
   if (!findUser) {
-    return next(appError(400, ERROR_MESSAGES.USER_NOT_FOUND));
+    return next(new AppError(400, ERROR_MESSAGES.USER_NOT_FOUND));
   }
 
   const updateUser = await userRepo.update(
@@ -79,7 +87,7 @@ async function updateUserProfile(req, res, next) {
   );
 
   if (updateUser.affected === 0) {
-    return next(appError(400, ERROR_MESSAGES.UPDATE_USER_FAILED));
+    return next(new AppError(400, ERROR_MESSAGES.UPDATE_USER_FAILED));
   }
 
   const result = await userRepo.findOne({
