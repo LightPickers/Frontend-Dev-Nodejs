@@ -1,4 +1,5 @@
 const { dataSource } = require("../../db/data-source");
+const logger = require("../../utils/logger")("auth");
 const AppError = require("../../utils/appError");
 const ERROR_MESSAGES = require("../../utils/errorMessages");
 const { ZIPCODE_PATTERN } = require("../../utils/validatePatterns");
@@ -12,8 +13,7 @@ const {
 } = require("../../utils/validUtils");
 
 async function updateUserProfile(req, res, next) {
-  // const { userId } = req.params;
-  const { userId } = req.body;
+  const { id: userId } = req.user;
   const {
     name,
     photo,
@@ -35,29 +35,36 @@ async function updateUserProfile(req, res, next) {
     isUndefined(phone) ||
     !isValidString(phone)
   ) {
+    logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
     return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
 
   if (!isValidName(name)) {
+    logger.warn(ERROR_MESSAGES.NAME_NOT_RULE);
     return next(new AppError(400, ERROR_MESSAGES.NAME_NOT_RULE));
   }
 
   if (!isValidPhone(phone)) {
+    logger.warn(ERROR_MESSAGES.PHONE_NOT_RULE);
     return next(new AppError(400, ERROR_MESSAGES.PHONE_NOT_RULE));
   }
 
   if (!isValidUrl(photo)) {
+    logger.warn(ERROR_MESSAGES.PROFILE_PHOTO_URL_INCORRECT);
     return next(new AppError(400, ERROR_MESSAGES.PROFILE_PHOTO_URL_INCORRECT));
   }
 
   if (!address_zipcode || !address_zipcode.match(ZIPCODE_PATTERN)) {
+    logger.warn(ERROR_MESSAGES.ZIPCODE_NOT_RULE);
     return next(new AppError(400, ERROR_MESSAGES.ZIPCODE_NOT_RULE));
   }
   if (!address_district || !address_detail) {
+    logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
     return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
 
   if (!birth_date || !isValidBirthDate(birth_date)) {
+    logger.warn(ERROR_MESSAGES.BIRTH_DATE_NOT_RULE);
     return next(new AppError(400, ERROR_MESSAGES.BIRTH_DATE_NOT_RULE));
   }
 
@@ -67,6 +74,7 @@ async function updateUserProfile(req, res, next) {
   });
 
   if (!findUser) {
+    logger.warn(ERROR_MESSAGES.USER_NOT_FOUND);
     return next(new AppError(400, ERROR_MESSAGES.USER_NOT_FOUND));
   }
 
@@ -87,6 +95,7 @@ async function updateUserProfile(req, res, next) {
   );
 
   if (updateUser.affected === 0) {
+    logger.warn(ERROR_MESSAGES.UPDATE_USER_FAILED);
     return next(new AppError(400, ERROR_MESSAGES.UPDATE_USER_FAILED));
   }
 
