@@ -3,6 +3,10 @@ const config = require("../config/index");
 
 const Users = require("../entities/Users");
 const Roles = require("../entities/Roles");
+const Products = require("../entities/Products");
+const Categories = require("../entities/Categories");
+const Brands = require("../entities/Brands");
+const Conditions = require("../entities/Conditions");
 
 const dataSource = new DataSource({
   type: "postgres",
@@ -13,10 +17,7 @@ const dataSource = new DataSource({
   database: config.get("db.database"),
   synchronize: config.get("db.synchronize"),
   poolSize: 10,
-  entities: [
-    Users,
-    Roles
-  ],
+  entities: [Users, Roles, Products, Categories, Brands, Conditions],
   ssl: config.get("db.ssl"),
 });
 
