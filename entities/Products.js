@@ -66,6 +66,10 @@ module.exports = new EntitySchema({
       type: "boolean",
       nullable: false,
     },
+    is_featured: {
+      type: "boolean",
+      nullable: false,
+    },
     created_at: {
       type: "timestamp",
       createDate: true,
