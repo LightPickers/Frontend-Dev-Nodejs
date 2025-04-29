@@ -4,8 +4,8 @@ const AppError = require("../../utils/appError");
 const ERROR_MESSAGES = require("../../utils/errorMessages");
 
 async function getUserProfile(req, res, next) {
-  //const { id: userId } = req.user;
-  const userId = req.body.userId;
+  console.log(req.user);
+  const { id: userId } = req.user;
   const user = await dataSource.getRepository("Users").findOne({
     select: [
       "name",
