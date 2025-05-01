@@ -195,47 +195,54 @@ async function updateUserProfile(req, res, next) {
     address_detail,
   } = req.body;
 
-  if (
-    isUndefined(userId) ||
-    !isValidString(userId) ||
-    isUndefined(name) ||
-    !isValidString(name) ||
-    isUndefined(gender) ||
-    !isValidString(gender) ||
-    isUndefined(phone) ||
-    !isValidString(phone)
-  ) {
-    logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
-    return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+  const errors = {};
+
+  if (isUndefined(userId) || !isValidString(userId)) {
+    errors.userId = ERROR_MESSAGES.FIELDS_INCORRECT;
   }
 
-  if (!isValidName(name)) {
-    logger.warn(ERROR_MESSAGES.NAME_NOT_RULE);
-    return next(new AppError(400, ERROR_MESSAGES.NAME_NOT_RULE));
+  if (isUndefined(name) || !isValidString(name)) {
+    errors.name = ERROR_MESSAGES.FIELDS_INCORRECT;
+  } else if (!isValidName(name)) {
+    errors.name = ERROR_MESSAGES.NAME_NOT_RULE;
   }
 
-  if (!isValidPhone(phone)) {
-    logger.warn(ERROR_MESSAGES.PHONE_NOT_RULE);
-    return next(new AppError(400, ERROR_MESSAGES.PHONE_NOT_RULE));
+  if (isUndefined(gender) || !isValidString(gender)) {
+    errors.gender = ERROR_MESSAGES.FIELDS_INCORRECT;
   }
 
-  if (!isValidUrl(photo)) {
-    logger.warn(ERROR_MESSAGES.PROFILE_PHOTO_URL_INCORRECT);
-    return next(new AppError(400, ERROR_MESSAGES.PROFILE_PHOTO_URL_INCORRECT));
+  if (isUndefined(phone) || !isValidString(phone)) {
+    errors.phone = ERROR_MESSAGES.FIELDS_INCORRECT;
+  } else if (!isValidPhone(phone)) {
+    errors.phone = ERROR_MESSAGES.NAME_NOT_RULE;
   }
 
-  if (!address_zipcode || !address_zipcode.match(ZIPCODE_PATTERN)) {
-    logger.warn(ERROR_MESSAGES.ZIPCODE_NOT_RULE);
-    return next(new AppError(400, ERROR_MESSAGES.ZIPCODE_NOT_RULE));
-  }
-  if (!address_district || !address_detail) {
-    logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
-    return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+  if (!address_zipcode) {
+    errors.address_zipcode = ERROR_MESSAGES.FIELDS_INCORRECT;
+  } else if (!address_zipcode.match(ZIPCODE_PATTERN)) {
+    errors.address_zipcode = ERROR_MESSAGES.ZIPCODE_NOT_RULE;
   }
 
-  if (!birth_date || !isValidBirthDate(birth_date)) {
-    logger.warn(ERROR_MESSAGES.BIRTH_DATE_NOT_RULE);
-    return next(new AppError(400, ERROR_MESSAGES.BIRTH_DATE_NOT_RULE));
+  if (isUndefined(address_district) || !isValidString(address_district)) {
+    errors.address_district = ERROR_MESSAGES.FIELDS_INCORRECT;
+  }
+
+  if (isUndefined(address_detail) || !isValidString(address_detail)) {
+    errors.address_detail = ERROR_MESSAGES.FIELDS_INCORRECT;
+  }
+
+  if (isUndefined(birth_date) || !isValidString(birth_date)) {
+    errors.birth_date = ERROR_MESSAGES.FIELDS_INCORRECT;
+  } else if (!isValidBirthDate(birth_date)) {
+    errors.birth_date = ERROR_MESSAGES.BIRTH_DATE_NOT_RULE;
+  }
+
+  if (Object.keys(errors).length > 0) {
+    logger.warn("欄位驗證失敗", { errors });
+    return res.status(400).json({
+      status: "false",
+      message: errors,
+    });
   }
 
   const userRepo = dataSource.getRepository("Users");
