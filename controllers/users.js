@@ -88,17 +88,15 @@ async function signup(req, res, next) {
 async function login(req, res, next) {
   const { email, password } = req.body;
 
-  if (
-    isUndefined(email) ||
-    !isValidString(email) ||
-    !isValidEmail(email) ||
-    isUndefined(password) ||
-    !isValidString(password)
-  ) {
+  if (isUndefined(email) || !isValidString(email) || !isValidEmail(email)) {
     logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
     return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
 
+  if (isUndefined(password) || !isValidString(password)) {
+    logger.warn(ERROR_MESSAGES.PASSWORD_FALSE);
+    return next(new AppError(401, ERROR_MESSAGES.PASSWORD_FALSE));
+  }
   if (!isValidPassword(password)) {
     logger.warn(ERROR_MESSAGES.PASSWORD_NOT_RULE);
     return next(new AppError(400, ERROR_MESSAGES.PASSWORD_NOT_RULE));
@@ -119,7 +117,7 @@ async function login(req, res, next) {
   if (!existingUser) {
     logger.warn(ERROR_MESSAGES.USER_NOT_FOUND_OR_PASSWORD_FALSE);
     return next(
-      new AppError(400, ERROR_MESSAGES.USER_NOT_FOUND_OR_PASSWORD_FALSE)
+      new AppError(401, ERROR_MESSAGES.USER_NOT_FOUND_OR_PASSWORD_FALSE)
     );
   }
 
@@ -130,7 +128,7 @@ async function login(req, res, next) {
   if (!isMatch) {
     logger.warn(ERROR_MESSAGES.USER_NOT_FOUND_OR_PASSWORD_FALSE);
     return next(
-      new AppError(400, ERROR_MESSAGES.USER_NOT_FOUND_OR_PASSWORD_FALSE)
+      new AppError(401, ERROR_MESSAGES.USER_NOT_FOUND_OR_PASSWORD_FALSE)
     );
   }
 
