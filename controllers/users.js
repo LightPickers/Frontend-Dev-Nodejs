@@ -214,7 +214,7 @@ async function updateUserProfile(req, res, next) {
   if (isUndefined(phone) || !isValidString(phone)) {
     errors.phone = ERROR_MESSAGES.FIELDS_INCORRECT;
   } else if (!isValidPhone(phone)) {
-    errors.phone = ERROR_MESSAGES.PHONE_NOT_RULE_NOT_RULE;
+    errors.phone = ERROR_MESSAGES.PHONE_NOT_RULE;
   }
 
   if (!address_zipcode) {
