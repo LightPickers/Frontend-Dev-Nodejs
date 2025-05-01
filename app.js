@@ -41,7 +41,7 @@ app.use((err, req, res, next) => {
   res.status(statusCode).json({
     status: err.status || "false",
     message: err.message,
-    error: process.env.NODE_ENV === "development" ? err : {},
+    //error: process.env.NODE_ENV === "development" ? err : {},
   });
 });
 
