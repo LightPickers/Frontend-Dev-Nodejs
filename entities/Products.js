@@ -109,5 +109,10 @@ module.exports = new EntitySchema({
         foreignKeyConstraintName: "products_conditions_id_fk",
       },
     },
+    Favorites: {
+      target: "Favorites",
+      type: "one-to-many",
+      inverseSide: "Products",
+    },
   },
 });
