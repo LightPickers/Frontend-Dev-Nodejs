@@ -82,7 +82,11 @@ async function signup(req, res, next) {
       },
     });
   } catch (error) {
-    next(error);
+    logger.error("伺服器錯誤", { error });
+    res.status(500).json({
+      status: false,
+      message: "發生伺服器錯誤",
+    });
   }
 }
 async function login(req, res, next) {
