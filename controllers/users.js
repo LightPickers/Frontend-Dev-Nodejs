@@ -33,6 +33,7 @@ async function signup(req, res, next) {
 
     const userData = {
       ...req.body,
+      photo: req.body.photo || null,
       is_banned: false,
       role_id: "84f0e762-ff1c-4197-b525-c8ec22de8dd5",
     };
