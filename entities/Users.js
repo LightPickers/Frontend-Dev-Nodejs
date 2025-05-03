@@ -33,6 +33,7 @@ module.exports = new EntitySchema({
     photo: {
       type: "varchar",
       length: 2048,
+      nullable: true,
     },
     gender: {
       type: "varchar",
