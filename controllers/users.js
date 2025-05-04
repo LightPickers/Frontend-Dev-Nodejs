@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const generateJWT = require("../utils/generateJWT");
 const logger = require("../utils/logger")("UsersController");
-const AppError = require("../utils/AppError");
+const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 
 const validateSignup = require("../utils/validateSignup");
@@ -33,6 +33,7 @@ async function signup(req, res, next) {
 
     const userData = {
       ...req.body,
+      photo: req.body.photo || null,
       is_banned: false,
       role_id: "84f0e762-ff1c-4197-b525-c8ec22de8dd5",
     };
@@ -82,7 +83,11 @@ async function signup(req, res, next) {
       },
     });
   } catch (error) {
-    next(error);
+    logger.error("伺服器錯誤", { error });
+    res.status(500).json({
+      status: false,
+      message: "發生伺服器錯誤",
+    });
   }
 }
 async function login(req, res, next) {
