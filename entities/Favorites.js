@@ -21,25 +21,37 @@ module.exports = new EntitySchema({
     },
   },
   relations: {
-    Products: {
-      target: "Products",
-      type: "many-to-one",
-      joinColumn: {
-        name: "id",
-        referencedColumnName: "id",
-        foreignKeyConstraintName: "favorites_products_id_fk",
-      },
-      onDelete: "CASCADE",
-    },
     Users: {
       target: "Users",
       type: "many-to-one",
       joinColumn: {
-        name: "id",
+        name: "user_id",
         referencedColumnName: "id",
-        foreignKeyConstraintName: "favorites_users_id_fk",
+        // foreignKeyConstraintName: "favorites_users_id_fk",
+      },
+      onDelete: "CASCADE",
+    },
+    Products: {
+      target: "Products",
+      type: "many-to-one",
+      joinColumn: {
+        name: "product_id",
+        referencedColumnName: "id",
+        // foreignKeyConstraintName: "favorites_products_id_fk",
       },
       onDelete: "CASCADE",
     },
   },
+  foreignKeys: [
+    {
+      columnNames: ["user_id"],
+      referencedTableName: "Users",
+      referencedColumnNames: ["id"],
+    },
+    {
+      columnNames: ["product_id"],
+      referencedTableName: "Products",
+      referencedColumnNames: ["id"],
+    },
+  ],
 });

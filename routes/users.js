@@ -17,7 +17,7 @@ router.put(
 router.post("/favorites", auth, handleErrorAsync(savedList.addToSavedList)); // 新增收藏資料
 router.get("/favorites", auth, handleErrorAsync(savedList.getSavedList)); // 取得收藏資料
 router.delete(
-  "/favorites/:favorites_Id",
+  "/favorites/:favorites_id",
   auth,
   handleErrorAsync(savedList.removeFromSavedList)
 ); // 移除收藏資料
