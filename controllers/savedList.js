@@ -17,6 +17,7 @@ const {
   // isValidPhone,
   // isValidBirthDate,
 } = require("../utils/validUtils");
+const Favorites = require("../entities/Favorites");
 
 async function addToSavedList(req, res, next) {
   const userId = req.user.id;
@@ -80,7 +81,64 @@ async function removeFromSavedList(req, res, next) {
   });
 }
 
-async function getSavedList(req, res, next) {}
+async function getSavedList(req, res, next) {
+  const userId = req.user.id;
+  const validSortFields = [
+    "Favorites.created_at",
+    "Products.created_at",
+    "price",
+  ]; // 限定排序欄位
+  const validOrders = ["ASC", "DESC"]; // 排序方式限定升冪降冪兩種
+  let { sortBy = "Favorites.created_at", orderBy = "DESC" } = req.query;
+
+  // 檢查排序欄位是否合法
+  if (!validSortFields.includes(sortBy)) {
+    logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
+    sortBy = "Favorites.created_at";
+    // return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+  }
+
+  // 檢查排序方式是否合法
+  orderBy = orderBy.toUpperCase();
+  if (!validOrders.includes(order)) {
+    logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
+    orderBy = "DESC";
+    // return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+  }
+  sort_opt = sortBy.split(".");
+  sort_table = sort_opt[0];
+  sort_col = sort_opt[1];
+  const savedList = await favoritesRepo.find({
+    where: { Users: { id: userId } },
+    relations: ["Products"],
+    select: {
+      Products: {
+        id: true,
+        name: true,
+        selling_price: true,
+        primary_image: true,
+        is_available: true,
+        created_at: true,
+      },
+      Favorites: {
+        created_at: true,
+      },
+    },
+    order: { [sort_table]: { [sort_col]: orderBy } },
+  });
+
+  const totalPrice = savedList.reduce(
+    (sum, item) => sum + item.product.price,
+    0
+  ); //計算收藏清單中的商品價格總額
+
+  res.status(200).json({
+    status: "true",
+    message: "成功",
+    totalSellingPrice: totalPrice,
+    data: savedList,
+  });
+}
 
 module.exports = {
   addToSavedList,
