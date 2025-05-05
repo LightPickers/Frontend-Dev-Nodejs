@@ -19,6 +19,8 @@ const ERROR_MESSAGES = {
   ADDRESS_NOT_RULE: "地址資料填寫不完整",
   ZIPCODE_NOT_RULE: "郵遞區號必須為 3 碼數字",
   BIRTH_DATE_NOT_RULE: "生日格式不正確或超出合理範圍（yyyy-mm-dd）",
+  DUPLICATE_FAVORITES: "商品已加入收藏資料",
+  FAVORITE_NOT_FOUND: "商品未加入收藏資料",
 };
 
 module.exports = ERROR_MESSAGES;

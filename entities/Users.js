@@ -86,5 +86,10 @@ module.exports = new EntitySchema({
         foreignKeyConstraintName: "user_role_id_fk",
       },
     },
+    Favorites: {
+      target: "Favorites",
+      type: "one-to-many",
+      inverseSide: "Users",
+    },
   },
 });

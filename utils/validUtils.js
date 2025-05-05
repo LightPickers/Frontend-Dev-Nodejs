@@ -51,6 +51,16 @@ function isValidBirthDate(value) {
   return true;
 }
 
+async function checkIfProductExists(favoritesRepo, userId, productId) {
+  return await favoritesRepo.findOne({
+    where: {
+      Users: { id: userId },
+      Products: { id: productId },
+    },
+    relations: ["Users", "Products"],
+  });
+}
+
 module.exports = {
   isUndefined,
   isValidString,
@@ -61,4 +71,5 @@ module.exports = {
   isValidPhone,
   isValidName,
   isValidBirthDate,
+  checkIfProductExists,
 };
