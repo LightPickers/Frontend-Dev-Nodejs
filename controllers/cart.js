@@ -1,7 +1,7 @@
 const { IsNull, In } = require("typeorm");
 const config = require("../config/index");
 const { dataSource } = require("../db/data-source");
-const redis = require("../utils/redis");
+//const redis = require("../utils/redis");
 const logger = require("../utils/logger")("Cart");
 const { isUndefined, isValidString } = require("../utils/validUtils");
 const AppError = require("../utils/appError");
@@ -88,7 +88,7 @@ async function cleanCart(req, res, next) {
     message: "購物車清除成功",
   });
 }
-
+/*
 async function postCartCheckout(req, res, next) {
   const { id: userId } = req.user;
   const {
@@ -169,10 +169,11 @@ async function postCartCheckout(req, res, next) {
     },
   });
 }
+*/
 
 module.exports = {
   getCart,
   deleteCartProduct,
   cleanCart,
-  postCartCheckout,
+  //postCartCheckout,
 };
