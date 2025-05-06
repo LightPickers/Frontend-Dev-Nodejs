@@ -158,7 +158,9 @@ async function postCartCheckout(req, res, next) {
     logger.info(`訂單暫存成功：${cacheKey}`);
   } catch (error) {
     logger.error(ERROR_MESSAGES.REDIS_WRITE_FAILED, error);
-    return next(new AppError(500, "伺服器暫時無法處理結帳資訊"));
+    return next(
+      new AppError(500, ERROR_MESSAGES.REDIS_FAILED_TO_PROCESS_CHECKOUT)
+    );
   }
 
   return res.status(200).json({
