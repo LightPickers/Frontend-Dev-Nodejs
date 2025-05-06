@@ -21,6 +21,10 @@ const ERROR_MESSAGES = {
   BIRTH_DATE_NOT_RULE: "生日格式不正確或超出合理範圍（yyyy-mm-dd）",
   DUPLICATE_FAVORITES: "商品已加入收藏資料",
   FAVORITE_NOT_FOUND: "商品未加入收藏資料",
+  DATA_NOT_FOUND: "資料不存在",
+  DATA_ALREADY_USED: "資料已被使用",
+  DATA_NOT_DELETE: "資料未刪除",
+  REDIS_WRITE_FAILED: "Redis 寫入失敗",
 };
 
 module.exports = ERROR_MESSAGES;
