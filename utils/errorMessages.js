@@ -25,6 +25,7 @@ const ERROR_MESSAGES = {
   DATA_ALREADY_USED: "資料已被使用",
   DATA_NOT_DELETE: "資料未刪除",
   REDIS_WRITE_FAILED: "Redis 寫入失敗",
+  REDIS_FAILED_TO_PROCESS_CHECKOUT: "Redis暫時無法處理結帳資訊",
 };
 
 module.exports = ERROR_MESSAGES;
