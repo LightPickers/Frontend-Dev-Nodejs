@@ -249,6 +249,49 @@ async function updateUserProfile(req, res, next) {
   }
 
   const userRepo = dataSource.getRepository("Users");
+  const existingUser = await userRepo.findOne({
+    select: [
+      "name",
+      "photo",
+      "gender",
+      "birth_date",
+      "phone",
+      "address_zipcode",
+      "address_district",
+      "address_detail",
+    ],
+    where: { id: userId },
+  });
+
+  if (!existingUser) {
+    logger.warn(ERROR_MESSAGES.USER_NOT_FOUND);
+    return next(new AppError(400, ERROR_MESSAGES.USER_NOT_FOUND));
+  }
+
+  const dataToUpdate = {
+    name,
+    photo,
+    gender,
+    birth_date,
+    phone,
+    address_zipcode,
+    address_district,
+    address_detail,
+  };
+
+  const isUpdated = Object.entries(dataToUpdate).some(([key, value]) => {
+    return existingUser[key] !== value;
+  });
+
+  if (!isUpdated) {
+    logger.info("資料未變更，略過更新");
+    return res.status(200).json({
+      status: true,
+      message: "資料未變更",
+      data: existingUser,
+    });
+  }
+
   const findUser = await userRepo.findOne({
     where: { id: userId },
   });
@@ -294,7 +337,7 @@ async function updateUserProfile(req, res, next) {
     where: { id: userId },
   });
   res.status(200).json({
-    status: "true",
+    status: true,
     message: "資料更新成功",
     data: result,
   });
