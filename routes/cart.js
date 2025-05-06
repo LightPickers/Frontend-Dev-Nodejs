@@ -13,12 +13,10 @@ router.delete(
   handleErrorAsync(cartController.deleteCartProduct)
 );
 router.delete("/", auth, handleErrorAsync(cartController.cleanCart));
-/*
 router.post(
   "/checkout",
   auth,
   handleErrorAsync(cartController.postCartCheckout)
 );
-*/
 
 module.exports = router;
