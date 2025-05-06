@@ -11,11 +11,13 @@ try {
 const db = require("./db");
 const web = require("./web");
 const secret = require("./secret");
+const redisSecret = require("./redisSecret");
 
 const config = {
   db,
   web,
   secret,
+  redisSecret,
 };
 
 class ConfigManager {
