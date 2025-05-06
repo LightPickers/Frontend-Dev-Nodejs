@@ -5,7 +5,7 @@ const ERROR_MESSAGES = require("../utils/errorMessages");
 const {
   isUndefined,
   isValidString,
-  checkIfProductExists,
+  checkIfProductSaved,
 } = require("../utils/validUtils");
 
 async function addToSavedList(req, res, next) {
@@ -18,7 +18,8 @@ async function addToSavedList(req, res, next) {
   }
 
   const favoritesRepo = dataSource.getRepository("Favorites");
-  const existProduct = await checkIfProductExists(
+  // 檢查商品是否已被儲存於儲存清單中
+  const existProduct = await checkIfProductSaved(
     favoritesRepo,
     user_id,
     product_id

@@ -1,13 +1,17 @@
 const { EntitySchema } = require("typeorm");
 
 module.exports = new EntitySchema({
-  name: "Favorites",
-  tableName: "FAVORITES",
+  name: "Product_images",
+  tableName: "PRODUCT_IMAGES",
   columns: {
     id: {
       primary: true,
       type: "uuid",
       generated: "uuid",
+    },
+    image: {
+      type: "varchar",
+      length: 2048,
     },
     created_at: {
       type: "timestamp",
@@ -21,16 +25,6 @@ module.exports = new EntitySchema({
     },
   },
   relations: {
-    Users: {
-      target: "Users",
-      type: "many-to-one",
-      joinColumn: {
-        name: "user_id",
-        referencedColumnName: "id",
-        // foreignKeyConstraintName: "favorites_users_id_fk",
-      },
-      onDelete: "CASCADE",
-    },
     Products: {
       target: "Products",
       type: "many-to-one",
@@ -42,11 +36,6 @@ module.exports = new EntitySchema({
     },
   },
   foreignKeys: [
-    {
-      columnNames: ["user_id"],
-      referencedTableName: "Users",
-      referencedColumnNames: ["id"],
-    },
     {
       columnNames: ["product_id"],
       referencedTableName: "Products",
