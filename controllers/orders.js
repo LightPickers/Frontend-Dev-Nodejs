@@ -9,6 +9,13 @@ const {
   isValidEmail,
   isValidPhone,
 } = require("../utils/validUtils");
+const { merchantId, version } = require("../config/neWebPaySecret");
+const {
+  genDataChain,
+  create_mpg_aes_encrypt,
+  create_mpg_sha_encrypt,
+  create_mpg_aes_decrypt,
+} = require("../utils/neWebPayCrypto");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 
