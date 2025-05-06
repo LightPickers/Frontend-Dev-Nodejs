@@ -47,4 +47,45 @@ async function getCart(req, res, next) {
   });
 }
 
-module.exports = { getCart };
+async function deleteCartProduct(req, res, next) {
+  const { cart_id } = req.params;
+  const { id: user_id } = req.user;
+  if (isUndefined(cart_id) || !isValidString(cart_id)) {
+    logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
+    return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+  }
+
+  const cartRepo = dataSource.getRepository("Cart");
+  const result = await cartRepo.delete({
+    id: cart_id,
+    user_id: user_id,
+  });
+  if (result.affected === 0) {
+    logger.warn(`購物車商品${ERROR_MESSAGES.DATA_NOT_DELETE}`);
+    return next(
+      new AppError(400, `購物車商品${ERROR_MESSAGES.DATA_NOT_DELETE}`)
+    );
+  }
+
+  res.status(200).json({
+    status: true,
+    message: "刪除成功",
+  });
+}
+
+async function cleanCart(req, res, next) {
+  const { id: user_id } = req.user;
+  const cartRepo = dataSource.getRepository("Cart");
+  const result = await cartRepo.delete({ user_id: user_id });
+  if (result.affected === 0) {
+    logger.warn(`購物車${ERROR_MESSAGES.DATA_NOT_DELETE}`);
+    return next(new AppError(400, `購物車${ERROR_MESSAGES.DATA_NOT_DELETE}`));
+  }
+
+  res.status(200).json({
+    status: true,
+    message: "購物車清除成功",
+  });
+}
+
+module.exports = { getCart, deleteCartProduct, cleanCart };
