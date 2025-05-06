@@ -89,8 +89,90 @@ async function cleanCart(req, res, next) {
   });
 }
 
+async function postCartCheckout(req, res, next) {
+  const { id: userId } = req.user;
+  const {
+    shipping_method: shippingMethod,
+    payment_method: paymentMethod,
+    desired_date: desiredDate,
+    coupon_code: couponCode,
+  } = req.body;
+
+  if (
+    isUndefined(shippingMethod) ||
+    !isValidString(shippingMethod) ||
+    isUndefined(paymentMethod) ||
+    !isValidString(paymentMethod) ||
+    isUndefined(desiredDate) ||
+    !isValidString(desiredDate)
+  ) {
+    logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
+    return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+  }
+
+  const couponRepo = dataSource.getRepository("Coupons");
+  const orderRepo = dataSource.getRepository("Orders");
+
+  let coupon = null;
+  if (couponCode) {
+    coupon = await couponRepo.findOne({
+      select: ["id", "code", "discount"],
+      where: { code: couponCode },
+    });
+
+    if (!coupon) {
+      logger.warn(`優惠券${ERROR_MESSAGES.DATA_NOT_FOUND}`);
+      return next(new AppError(400, `優惠券${ERROR_MESSAGES.DATA_NOT_FOUND}`));
+    }
+
+    const usedCoupon = await orderRepo.findOne({
+      select: ["id", "user_id", "coupon_id"],
+      where: { user_id: userId, coupon_id: coupon.id, status: "completed" },
+    });
+
+    if (usedCoupon) {
+      logger.warn(`優惠券${ERROR_MESSAGES.DATA_ALREADY_USED}`);
+      return next(
+        new AppError(400, `優惠券${ERROR_MESSAGES.DATA_ALREADY_USED}`)
+      );
+    }
+  }
+
+  const cacheKey = `checkout:${userId}`;
+  const order_draft = {
+    user_id: userId,
+    shippingMethod,
+    paymentMethod,
+    desiredDate,
+  };
+  if (coupon) {
+    order_draft.coupon = {
+      id: coupon.id,
+      code: coupon.code,
+      discount: coupon.discount,
+    };
+  }
+
+  try {
+    await redis.set(cacheKey, JSON.stringify(order_draft), { EX: 1800 }); // 30 分鐘
+    logger.info(`訂單暫存成功：${cacheKey}`);
+  } catch (error) {
+    logger.error(ERROR_MESSAGES.REDIS_WRITE_FAILED, error);
+    return next(new AppError(500, "伺服器暫時無法處理結帳資訊"));
+  }
+
+  return res.status(200).json({
+    status: true,
+    message: "結帳資料暫存成功",
+    data: {
+      order_draft,
+    },
+  });
+}
+
 module.exports = {
   getCart,
   deleteCartProduct,
   cleanCart,
+  postCartCheckout,
 };
