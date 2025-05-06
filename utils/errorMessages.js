@@ -14,7 +14,7 @@ const ERROR_MESSAGES = {
   USER_NOT_SIGNUP: "使用者尚未登入",
   EXPIRED_TOKEN: "Token 已過期",
   INVALID_TOKEN: "無效的 Token",
-  NAME_NOT_RULE: "姓名須為 2-10 個字，不可包含特殊符號與空白",
+  NAME_NOT_RULE: "姓名須為 2-10 個字，不可包含數字、特殊符號與空白",
   PHONE_NOT_RULE: "電話號碼格式錯誤，須為 09 開頭加 8 碼數字",
   ADDRESS_NOT_RULE: "地址資料填寫不完整",
   ZIPCODE_NOT_RULE: "郵遞區號必須為 3 碼數字",
