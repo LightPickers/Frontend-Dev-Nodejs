@@ -14,11 +14,17 @@ const ERROR_MESSAGES = {
   USER_NOT_SIGNUP: "使用者尚未登入",
   EXPIRED_TOKEN: "Token 已過期",
   INVALID_TOKEN: "無效的 Token",
-  NAME_NOT_RULE: "姓名須為 2-10 個字，不可包含特殊符號與空白",
+  NAME_NOT_RULE: "姓名須為 2-10 個字，不可包含數字、特殊符號與空白",
   PHONE_NOT_RULE: "電話號碼格式錯誤，須為 09 開頭加 8 碼數字",
   ADDRESS_NOT_RULE: "地址資料填寫不完整",
   ZIPCODE_NOT_RULE: "郵遞區號必須為 3 碼數字",
   BIRTH_DATE_NOT_RULE: "生日格式不正確或超出合理範圍（yyyy-mm-dd）",
+  DUPLICATE_FAVORITES: "商品已加入收藏資料",
+  FAVORITE_NOT_FOUND: "商品未加入收藏資料",
+  DATA_NOT_FOUND: "資料不存在",
+  DATA_ALREADY_USED: "資料已被使用",
+  DATA_NOT_DELETE: "資料未刪除",
+  REDIS_WRITE_FAILED: "Redis 寫入失敗",
 };
 
 module.exports = ERROR_MESSAGES;

@@ -11,6 +11,8 @@ const Orders = require("../entities/Orders");
 const Order_items = require("../entities/Order_items");
 const Payments = require("../entities/Payments");
 const Coupons = require("../entities/Coupons");
+const Favorites = require("../entities/Favorites");
+const Cart = require("../entities/Cart");
 
 const dataSource = new DataSource({
   type: "postgres",
@@ -32,6 +34,8 @@ const dataSource = new DataSource({
     Order_items,
     Payments,
     Coupons,
+    Favorites,
+    Cart,
   ],
   ssl: config.get("db.ssl"),
 });
