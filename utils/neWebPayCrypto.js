@@ -1,38 +1,44 @@
 const crypto = require("crypto");
-const {
-  hashIv,
-  hashKey,
-  merchantId,
-  version,
-  notifyUrl,
-} = require("../config/secret");
+const config = require("../config/index");
 const RespondType = "JSON";
 
 function genDataChain(neWedPayOrder) {
-  return `MerchantID=${merchantId}&RespondType=${RespondType}&TimeStamp=${
-    neWedPayOrder.TimeStamp
+  return `MerchantID=${config.get(
+    "neWebPaySecret.merchantId"
+  )}&RespondType=${RespondType}&TimeStamp=${neWedPayOrder.TimeStamp}&
+      Version=${config.get("neWebPaySecret.version")}&MerchantOrderNo=${
+    neWedPayOrder.MerchantOrderNo
   }&
-      Version=${version}&MerchantOrderNo=${neWedPayOrder.MerchantOrderNo}&
       Amt=${neWedPayOrder.Amt}&ItemDesc=${encodeURIComponent(
     neWedPayOrder.ItemDesc
-  )}&NotifyURL=${encodeURIComponent(notifyUrl)}`;
+  )}&NotifyURL=${encodeURIComponent(config.get("neWebPaySecret.notifyUrl"))}`;
 }
 
 function create_mpg_aes_encrypt(TradeInfo) {
-  const encrypt = crypto.createCipheriv("aes-256-cbc", hashKey, hashIv);
+  const encrypt = crypto.createCipheriv(
+    "aes-256-cbc",
+    `${config.get("neWebPaySecret.hashKey")}`,
+    `${config.get("neWebPaySecret.hashIv")}`
+  );
   const enc = encrypt.update(genDataChain(TradeInfo), "utf8", "hex");
   return enc + encrypt.final("hex");
 }
 
 function create_mpg_sha_encrypt(aesEncrypt) {
   const sha = crypto.createHash("sha256");
-  const plainText = `HashKey=${hashKey}&${aesEncrypt}&HashIV=${hashIv}`;
+  const plainText = `HashKey=${config.get(
+    "neWebPaySecret.hashKey"
+  )}&${aesEncrypt}&HashIV=${config.get("neWebPaySecret.hashIv")}`;
 
   return sha.update(plainText).digest("hex").toUpperCase();
 }
 
 function create_mpg_aes_decrypt(TradeInfo) {
-  const decrypt = crypto.createDecipheriv("aes256", hashKey, hashIv);
+  const decrypt = crypto.createDecipheriv(
+    "aes256",
+    config.get("neWebPaySecret.hashKey"),
+    config.get("neWebPaySecret.hashIv")
+  );
   decrypt.setAutoPadding(false);
   const text = decrypt.update(TradeInfo, "hex", "utf8");
   const plainText = text + decrypt.final("utf8");
