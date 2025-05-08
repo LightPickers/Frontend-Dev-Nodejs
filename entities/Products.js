@@ -114,5 +114,10 @@ module.exports = new EntitySchema({
       type: "one-to-many",
       inverseSide: "Products",
     },
+    Product_images: {
+      target: "Product_images",
+      type: "one-to-many",
+      inverseSide: "Products",
+    },
   },
 });
