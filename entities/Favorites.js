@@ -9,6 +9,14 @@ module.exports = new EntitySchema({
       type: "uuid",
       generated: "uuid",
     },
+    user_id: {
+      type: "uuid",
+      nullable: false,
+    },
+    product_id: {
+      type: "uuid",
+      nullable: false,
+    },
     created_at: {
       type: "timestamp",
       createDate: true,

@@ -1,3 +1,4 @@
+const { isUUID } = require("validator");
 const { titleCase } = require("typeorm/util/StringUtils.js");
 const { dataSource } = require("../db/data-source");
 
@@ -7,7 +8,7 @@ const ERROR_MESSAGES = require("../utils/errorMessages");
 const {
   isUndefined,
   isValidString,
-  checkIfProductSaved,
+  checkProduct,
 } = require("../utils/validUtils");
 const { ServerDescription } = require("typeorm");
 const Categories = require("../entities/Categories");
@@ -17,16 +18,20 @@ async function getProducts(req, res, next) {
   const { product_id } = req.params;
 
   //400
-  if (isUndefined(product_id) || !isValidString(product_id)) {
+  if (
+    isUndefined(product_id) ||
+    !isValidString(product_id) ||
+    !isUUID(product_id, 4)
+  ) {
     logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
     return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
 
   const productsRepo = dataSource.getRepository("Products");
-  const imagesRepo = dataSource.getRepository("Products_images");
+  const imagesRepo = dataSource.getRepository("Product_images");
 
   // 404
-  const existProduct = await checkIfProductSaved(productsRepo, product_id);
+  const existProduct = await checkProduct(productsRepo, product_id);
   if (!existProduct) {
     logger.warn(ERROR_MESSAGES.DATA_NOT_FOUND);
     return next(new AppError(404, ERROR_MESSAGES.DATA_NOT_FOUND));
