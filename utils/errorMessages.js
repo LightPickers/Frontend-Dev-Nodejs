@@ -26,6 +26,14 @@ const ERROR_MESSAGES = {
   DATA_NOT_DELETE: "資料未刪除",
   REDIS_WRITE_FAILED: "Redis 寫入失敗",
   REDIS_FAILED_TO_PROCESS_CHECKOUT: "Redis暫時無法處理結帳資訊",
+  ID_NOT_RULE: "ID 格式錯誤",
+  ID_NOT_FOUND: "ID 不存在",
+  DATA_NOT_POSITIVE: "需為正整數",
+  DATA_NEGATIVE: "不能小於 0",
+  PAGE_OUT_OF_RANGE: "頁數超出範圍",
+  PRICE_NOT_RULE: "價格必須是 0 或正整數，且最低價格不可高於最高價格",
+  PRICE_RANGE_NOT_RULE:
+    "價格區間格式錯誤，必須是合法的 JSON 陣列字串，請勿使用 00，且需由兩個數字組成，例如 [1000, 5000]",
   FINISH_CHECKOUT_FIRST: "請先完成結帳確認流程",
 };
 
