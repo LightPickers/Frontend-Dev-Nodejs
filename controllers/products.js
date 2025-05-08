@@ -12,10 +12,11 @@ const {
   isValidString,
   checkProduct,
 } = require("../utils/validUtils");
-const { ServerDescription } = require("typeorm");
-const Categories = require("../entities/Categories");
-const Brands = require("../entities/Brands");
+// const { ServerDescription } = require("typeorm");
+// const Categories = require("../entities/Categories");
+// const Brands = require("../entities/Brands");
 
+// API 54
 async function getProducts(req, res, next) {
   const {
     category_id,
@@ -189,6 +190,7 @@ async function getProducts(req, res, next) {
   });
 }
 
+// API 15
 async function getFeaturedProducts(req, res, next) {
   const featuredProducts = await dataSource.getRepository("Products").find({
     select: {
@@ -224,6 +226,7 @@ async function getFeaturedProducts(req, res, next) {
   });
 }
 
+// API 16
 async function getLatestProducts(req, res, next) {
   const sort = req.query.sort;
   const limit = parseInt(req.query.limit) || 6;
@@ -259,6 +262,7 @@ async function getLatestProducts(req, res, next) {
   });
 }
 
+// API 18
 async function getSpecificProducts(req, res, next) {
   const { product_id } = req.params;
 
