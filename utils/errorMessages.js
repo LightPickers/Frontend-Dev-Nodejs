@@ -26,6 +26,7 @@ const ERROR_MESSAGES = {
   DATA_NOT_DELETE: "資料未刪除",
   REDIS_WRITE_FAILED: "Redis 寫入失敗",
   REDIS_FAILED_TO_PROCESS_CHECKOUT: "Redis暫時無法處理結帳資訊",
+  FINISH_CHECKOUT_FIRST: "請先完成結帳確認流程",
 };
 
 module.exports = ERROR_MESSAGES;
