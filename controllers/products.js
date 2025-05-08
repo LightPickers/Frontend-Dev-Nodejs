@@ -18,15 +18,19 @@ async function getProducts(req, res, next) {
 
   const errors = {};
 
-  const pageInt = parseInt(page, 10) || 1;
-  const pageSizeInt = parseInt(page_size, 10) || 10;
+  const pageInt = parseInt(page, 10);
+  const pageSizeInt = parseInt(page_size, 10);
   const offset = (pageInt - 1) * pageSizeInt;
 
-  if (!isValidInteger(pageInt) || !isValidInteger(pageSizeInt)) {
-    return next(new AppError(400, "page 和 pageSize 需為正整數"));
+  if (!isValidInteger(pageInt) || pageInt <= 0) {
+    errors.page = ERROR_MESSAGES.DATA_NOT_POSITIVE;
+  }
+
+  if (!isValidInteger(pageSizeInt) || pageSizeInt <= 0) {
+    errors.pageSize = ERROR_MESSAGES.DATA_NOT_POSITIVE;
   }
   if (offset < 0) {
-    return next(new AppError(400, "offset 不能小於 0"));
+    errors.offset = ERROR_MESSAGES.DATA_NEGATIVE;
   }
 
   const query = dataSource
@@ -128,12 +132,12 @@ async function getProducts(req, res, next) {
   if (Object.keys(errors).length > 0) {
     logger.warn("欄位驗證失敗", { errors });
     return res.status(400).json({
-      status: "false",
+      status: false,
       message: errors,
     });
   }
 
-  const [products, total] = await query
+  const [selectedProducts, total] = await query
     .select([
       "product.id",
       "product.name",
@@ -151,11 +155,26 @@ async function getProducts(req, res, next) {
 
   const total_pages = Math.ceil(total / pageSizeInt);
 
+  if (pageInt > total_pages && total_pages > 0) {
+    logger.warn(ERROR_MESSAGES.PAGE_OUT_OF_RANGE);
+    return next(new AppError(400, ERROR_MESSAGES.PAGE_OUT_OF_RANGE));
+  }
+
+  const result = selectedProducts.map((products) => ({
+    id: products.id,
+    name: products.name,
+    brand: products.Brands.name,
+    condition: products.Conditions.name,
+    original_price: products.original_price,
+    selling_price: products.selling_price,
+    primary_image: products.primary_image,
+  }));
+
   res.json({
     status: true,
-    message: products.length === 0 ? "找不到搜尋商品" : undefined,
+    message: selectedProducts.length === 0 ? "找不到搜尋商品" : undefined,
     total_pages,
-    data: products,
+    data: result,
   });
 }
 
