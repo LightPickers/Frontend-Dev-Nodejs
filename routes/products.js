@@ -8,5 +8,6 @@ router.get(
   "/featured",
   handleErrorAsync(productsController.getFeaturedProducts)
 );
+router.get("/latest", handleErrorAsync(productsController.getLatestProducts));
 
 module.exports = router;

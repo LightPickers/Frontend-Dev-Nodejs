@@ -28,6 +28,10 @@ function isValidName(value) {
   return PATTERN_RULE.NAME_PATTERN.test(value);
 }
 
+function isValidId(value) {
+  return PATTERN_RULE.ID_PATTERN.test(value);
+}
+
 function isValidBirthDate(value) {
   if (!PATTERN_RULE.DATE_PATTERN.test(value)) return false;
 
@@ -78,6 +82,7 @@ module.exports = {
   isValidUrl,
   isValidPhone,
   isValidName,
+  isValidId,
   isValidBirthDate,
   checkIfProductSaved,
   checkProduct,
