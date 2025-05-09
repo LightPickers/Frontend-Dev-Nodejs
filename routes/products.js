@@ -9,5 +9,9 @@ router.get(
   handleErrorAsync(productsController.getFeaturedProducts)
 );
 router.get("/latest", handleErrorAsync(productsController.getLatestProducts));
+router.get(
+  "/:product_id",
+  handleErrorAsync(productsController.getSpecificProducts)
+);
 
 module.exports = router;

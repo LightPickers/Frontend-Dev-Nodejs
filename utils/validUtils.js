@@ -55,13 +55,21 @@ function isValidBirthDate(value) {
   return true;
 }
 
-async function checkIfProductExists(favoritesRepo, userId, productId) {
+// 檢查商品是否已收藏
+async function checkIfProductSaved(favoritesRepo, userId, productId) {
   return await favoritesRepo.findOne({
     where: {
       Users: { id: userId },
       Products: { id: productId },
     },
     relations: ["Users", "Products"],
+  });
+}
+
+// 檢查商品是否存在
+async function checkProduct(productsRepo, product_id) {
+  return await productsRepo.findOne({
+    where: { id: product_id },
   });
 }
 
@@ -76,5 +84,6 @@ module.exports = {
   isValidName,
   isValidId,
   isValidBirthDate,
-  checkIfProductExists,
+  checkIfProductSaved,
+  checkProduct,
 };
