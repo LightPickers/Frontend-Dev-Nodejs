@@ -290,7 +290,7 @@ async function getSpecificProducts(req, res, next) {
   const productsInfo = await productsRepo.findOne({
     select: {
       id: true,
-      Categories: { name: true },
+      Categories: { id: true, name: true },
       Brands: { name: true },
       Conditions: { name: true },
       name: true,
