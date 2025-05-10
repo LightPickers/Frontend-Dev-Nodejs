@@ -5,6 +5,7 @@ const ERROR_MESSAGES = {
   USER_NOT_FOUND: "使用者不存在",
   UPDATE_USER_FAILED: "更新使用者失敗",
   USER_NOT_CHANGE: "使用者名稱未改變",
+  USER_IS_BANNED: "帳號已被停權",
   EMAIL_NOT_RULE: "Email 不符合規則",
   EMAIL_ALREADY_USED: "Email 已被使用",
   PASSWORD_NOT_RULE:
