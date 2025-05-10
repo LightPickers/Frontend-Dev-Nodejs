@@ -6,6 +6,7 @@ const ERROR_MESSAGES = require("../utils/errorMessages");
 const {
   isUndefined,
   isValidString,
+  checkProduct,
   checkIfProductSaved,
 } = require("../utils/validUtils");
 
