@@ -3,7 +3,12 @@ const config = require("../config/index");
 const { dataSource } = require("../db/data-source");
 const redis = require("../utils/redis");
 const logger = require("../utils/logger")("Cart");
-const { isUndefined, isValidString } = require("../utils/validUtils");
+const { isUUID } = require("validator");
+const {
+  isUndefined,
+  isValidString,
+  checkOrder,
+} = require("../utils/validUtils");
 const {
   genDataChain,
   create_mpg_aes_encrypt,
@@ -118,6 +123,27 @@ async function postOrder(req, res, next) {
   res.status(200).type("html").send(htmlForm);
 }
 
+async function getOrder(req, res, next) {
+  const user_id = req.user.id;
+  const { oder_id } = req.params;
+
+  //400
+  if (isUndefined(oder_id) || !isValidString(oder_id) || !isUUID(oder_id, 4)) {
+    logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
+    return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+  }
+
+  const ordersRepo = dataSource.getRepository("Orders");
+
+  // 404
+  const existOrder = await checkOrder(ordersRepo, oder_id);
+  if (!existOrder) {
+    logger.warn(ERROR_MESSAGES.DATA_NOT_FOUND);
+    return next(new AppError(404, ERROR_MESSAGES.DATA_NOT_FOUND));
+  }
+}
+
 module.exports = {
   postOrder,
+  getOrder,
 };

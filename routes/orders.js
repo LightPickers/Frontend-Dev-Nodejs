@@ -7,5 +7,6 @@ const ordersController = require("../controllers/orders");
 const handleErrorAsync = require("../utils/handleErrorAsync");
 
 router.post("/", auth, handleErrorAsync(ordersController.postOrder));
+router.get("/:order_id", handleErrorAsync(ordersController.getOrder));
 
 module.exports = router;

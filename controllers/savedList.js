@@ -1,6 +1,7 @@
 const { dataSource } = require("../db/data-source");
 const logger = require("../utils/logger")("UsersController");
 const AppError = require("../utils/appError");
+const { isUUID } = require("validator");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 const {
   isUndefined,
@@ -12,20 +13,33 @@ async function addToSavedList(req, res, next) {
   const user_id = req.user.id;
   const { product_id } = req.body;
 
-  if (isUndefined(product_id) || !isValidString(product_id)) {
+  if (
+    isUndefined(product_id) ||
+    !isValidString(product_id) ||
+    !isUUID(product_id, 4)
+  ) {
     logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
     return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
 
+  const productsRepo = dataSource.getRepository("Products");
   const favoritesRepo = dataSource.getRepository("Favorites");
+
+  // 檢查商品是否存在
+  const existProduct = await checkProduct(productsRepo, product_id);
+  if (!existProduct) {
+    logger.warn(ERROR_MESSAGES.DATA_NOT_FOUND);
+    return next(new AppError(404, ERROR_MESSAGES.DATA_NOT_FOUND));
+  }
+
   // 檢查商品是否已被儲存於儲存清單中
-  const existProduct = await checkIfProductSaved(
+  const productSaved = await checkIfProductSaved(
     favoritesRepo,
     user_id,
     product_id
   );
 
-  if (existProduct) {
+  if (productSaved) {
     logger.warn(ERROR_MESSAGES.DUPLICATE_FAVORITES);
     return next(new AppError(409, ERROR_MESSAGES.DUPLICATE_FAVORITES));
   }
@@ -46,7 +60,11 @@ async function removeFromSavedList(req, res, next) {
   const user_id = req.user.id;
   const { favorites_id } = req.params;
 
-  if (isUndefined(favorites_id) || !isValidString(favorites_id)) {
+  if (
+    isUndefined(favorites_id) ||
+    !isValidString(favorites_id) ||
+    !isUUID(favorites_id, 4)
+  ) {
     logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
     return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
