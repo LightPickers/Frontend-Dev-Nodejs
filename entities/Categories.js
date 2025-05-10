@@ -14,6 +14,15 @@ module.exports = new EntitySchema({
       length: 50,
       nullable: false,
     },
+    image: {
+      type: "varchar",
+      length: 2048,
+      nullable: false,
+    },
+    is_featured: {
+      type: "boolean",
+      nullable: false,
+    },
     created_at: {
       type: "timestamp",
       createDate: true,

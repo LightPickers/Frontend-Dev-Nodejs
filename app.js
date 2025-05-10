@@ -9,6 +9,7 @@ const productsRouter = require("./routes/products.js");
 const cartRouter = require("./routes/cart.js");
 const ordersRouter = require("./routes/orders.js");
 const productsUtilsRouter = require("./routes/productsUtils.js");
+const categoryRouter = require("./routes/category.js");
 
 const app = express();
 app.use(cors());
@@ -32,6 +33,7 @@ app.use("/api/v1/products", productsRouter);
 app.use("/api/v1/cart", cartRouter);
 app.use("/api/v1/orders", ordersRouter);
 app.use("/api/v1/productsUtils", productsUtilsRouter);
+app.use("/api/v1/category", categoryRouter);
 
 //404
 app.use((req, res, next) => {
