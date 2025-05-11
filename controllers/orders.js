@@ -124,7 +124,7 @@ async function postOrder(req, res, next) {
 }
 
 async function getOrder(req, res, next) {
-  const user_id = req.user.id;
+  // const user_id = req.user.id;
   const { oder_id } = req.params;
 
   //400
@@ -141,6 +141,32 @@ async function getOrder(req, res, next) {
     logger.warn(ERROR_MESSAGES.DATA_NOT_FOUND);
     return next(new AppError(404, ERROR_MESSAGES.DATA_NOT_FOUND));
   }
+
+  // 200
+  const orderInfo = await ordersRepo.findOne({
+    select: {
+      id: true,
+      created_at: true,
+      status: true,
+      desired_date: true,
+      shipping_method: true,
+      payment_method: true,
+
+      // Categories: { id: true, name: true },
+    },
+    relations: {
+      Categories: true,
+      Brands: true,
+      Conditions: true,
+    },
+    where: { id: oder_id },
+  });
+
+  res.status(200).json({
+    message: "成功",
+    status: "true",
+    order: orderInfo,
+  });
 }
 
 module.exports = {
