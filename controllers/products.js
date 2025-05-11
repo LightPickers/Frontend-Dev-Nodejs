@@ -239,13 +239,6 @@ async function getLatestProducts(req, res, next) {
   }
 
   const latestProducts = await dataSource.getRepository("Products").find({
-    select: {
-      name: true,
-      original_price: true,
-      selling_price: true,
-      Conditions: { name: true },
-      primary_image: true,
-    },
     relations: {
       Conditions: true,
     },
@@ -254,11 +247,19 @@ async function getLatestProducts(req, res, next) {
     },
     take: limit,
   });
+
+  const result = latestProducts.map((product) => ({
+    id: product.id,
+    name: product.name,
+    condition: product.Conditions?.name || null,
+    original_price: product.original_price,
+    selling_price: product.selling_price,
+    primary_image: product.primary_image,
+  }));
+
   res.status(200).json({
     status: "true",
-    data: {
-      latestProducts,
-    },
+    data: result,
   });
 }
 
