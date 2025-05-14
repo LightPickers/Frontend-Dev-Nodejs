@@ -36,6 +36,8 @@ const ERROR_MESSAGES = {
   PRICE_RANGE_NOT_RULE:
     "價格區間格式錯誤，必須是合法的 JSON 陣列字串，請勿使用 00，且需由兩個數字組成，例如 [1000, 5000]",
   FINISH_CHECKOUT_FIRST: "請先完成結帳確認流程",
+  ORDER_ALREADY_USED_PLEASE_PAY_FIRST:
+    "您已有尚未付款的相同商品訂單，請先完成付款",
 };
 
 module.exports = ERROR_MESSAGES;
