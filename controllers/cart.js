@@ -29,7 +29,7 @@ async function getCart(req, res, next) {
     if (Products) {
       if (Products.is_available === false) {
         name = `${Products.name} (商品未供應)`;
-        quantity = 0;
+        quantity = "商品數量不足";
       } else {
         name = Products.name;
       }
