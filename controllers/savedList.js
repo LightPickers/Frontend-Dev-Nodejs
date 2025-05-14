@@ -116,6 +116,7 @@ async function getSavedList(req, res, next) {
     where: { Users: { id: user_id } },
     relations: ["Products"],
     select: {
+      id: true,
       Products: {
         id: true,
         name: true,

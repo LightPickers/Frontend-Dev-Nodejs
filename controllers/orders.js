@@ -17,6 +17,7 @@ const {
 } = require("../utils/neWebPayCrypto");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
+const Coupons = require("../entities/Coupons");
 
 async function postOrder(req, res, next) {
   const { id: userId } = req.user;
@@ -134,6 +135,7 @@ async function getOrder(req, res, next) {
   }
 
   const ordersRepo = dataSource.getRepository("Orders");
+  const orderItemsRepo = dataSource.getRepository("Order_items");
 
   // 404
   const existOrder = await checkOrder(ordersRepo, oder_id);
@@ -148,24 +150,47 @@ async function getOrder(req, res, next) {
       id: true,
       created_at: true,
       status: true,
-      desired_date: true,
+      amount: true,
+      Users: {
+        id: true,
+        name: true,
+        address_zipcode: true,
+        // address_city: true,
+        address_district: true,
+        address_detail: true,
+        phone: true,
+      },
+      Coupons: {
+        id: true,
+        discount: true,
+      },
       shipping_method: true,
       payment_method: true,
-
-      // Categories: { id: true, name: true },
+      desired_date: true,
     },
-    relations: {
-      Categories: true,
-      Brands: true,
-      Conditions: true,
-    },
+    relations: { Users: true, Coupons: true },
     where: { id: oder_id },
+  });
+
+  const orderItems = await orderItemsRepo.find({
+    select: {
+      product_id: true,
+      Products: {
+        name: true,
+        primary_image: true,
+      },
+      price: true,
+      quantity: true,
+    },
+    relations: { Products: true },
+    where: { oder_id: oder_id },
   });
 
   res.status(200).json({
     message: "成功",
     status: "true",
     order: orderInfo,
+    order_items: orderItems,
   });
 }
 
