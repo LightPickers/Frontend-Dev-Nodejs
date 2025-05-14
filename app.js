@@ -8,6 +8,7 @@ const usersRouter = require("./routes/users");
 const productsRouter = require("./routes/products.js");
 const cartRouter = require("./routes/cart.js");
 const ordersRouter = require("./routes/orders.js");
+const neWebPayRouter = require("./routes/neWebPay.js");
 const productsUtilsRouter = require("./routes/productsUtils.js");
 const categoryRouter = require("./routes/category.js");
 
@@ -32,6 +33,7 @@ app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/products", productsRouter);
 app.use("/api/v1/cart", cartRouter);
 app.use("/api/v1/orders", ordersRouter);
+app.use("/neWebPay", neWebPayRouter);
 app.use("/api/v1/productsUtils", productsUtilsRouter);
 app.use("/api/v1/category", categoryRouter);
 
