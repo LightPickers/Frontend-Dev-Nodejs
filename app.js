@@ -8,7 +8,9 @@ const usersRouter = require("./routes/users");
 const productsRouter = require("./routes/products.js");
 const cartRouter = require("./routes/cart.js");
 const ordersRouter = require("./routes/orders.js");
-const productsUtilsRouter = require("./routes/productsUtils.js");
+const categoriesRouter = require("./routes/categories.js");
+const brandsRouter = require("./routes/brands.js");
+const conditionsRouter = require("./routes/conditions.js");
 
 const app = express();
 app.use(cors());
@@ -31,7 +33,9 @@ app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/products", productsRouter);
 app.use("/api/v1/cart", cartRouter);
 app.use("/api/v1/orders", ordersRouter);
-app.use("/api/v1/productsUtils", productsUtilsRouter);
+app.use("/api/v1/categories", categoriesRouter);
+app.use("/api/v1/conditions", brandsRouter);
+app.use("/api/v1/brands", conditionsRouter);
 
 //404
 app.use((req, res, next) => {
