@@ -24,12 +24,22 @@ async function getCart(req, res, next) {
     ])
     .getMany();
 
-  const items = cart.map(({ Products, price_at_time, quantity }) => {
+  const items = cart.map(({ id, Products, price_at_time, quantity }) => {
+    let name = "商品已下架";
+    if (Products) {
+      if (Products.is_available === false) {
+        name = `${Products.name} (商品未供應)`;
+        quantity = "商品數量不足";
+      } else {
+        name = Products.name;
+      }
+    }
     return {
+      id,
       primary_image: Products?.primary_image || "",
-      name: Products?.name || "商品已下架",
-      price_at_time: price_at_time,
-      quantity: quantity,
+      name,
+      price_at_time,
+      quantity,
       total_price: price_at_time * quantity,
       is_available: Products?.is_available,
     };

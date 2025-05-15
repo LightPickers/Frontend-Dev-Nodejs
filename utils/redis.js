@@ -6,11 +6,31 @@ const redis = createClient({
   url: config.get("redisSecret.redisUrl"),
 });
 
-redis.on("error", (err) => logger.error("Redis Client Error", err));
+let isRedisConnected = false;
+let hasLoggedError = false;
 
+// Redis 錯誤事件處理
+redis.on("error", (err) => {
+  if (!hasLoggedError) {
+    logger.error("Redis Client Error，系統將不使用 Redis 快取", err);
+    hasLoggedError = true;
+  }
+});
+
+// Redis 成功連線事件，重置狀態
+redis.on("ready", () => {
+  isRedisConnected = true;
+  hasLoggedError = false;
+  logger.info("Redis connected and ready!");
+});
+
+// 初始化 Redis 連線
 async function connectRedis() {
-  await redis.connect();
-  logger.info("Redis connected!");
+  try {
+    await redis.connect();
+  } catch (error) {
+    logger.error("Redis 初始連線失敗，系統將不使用 Redis 快取");
+  }
 }
 
 connectRedis();

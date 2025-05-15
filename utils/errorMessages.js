@@ -5,6 +5,7 @@ const ERROR_MESSAGES = {
   USER_NOT_FOUND: "使用者不存在",
   UPDATE_USER_FAILED: "更新使用者失敗",
   USER_NOT_CHANGE: "使用者名稱未改變",
+  USER_IS_BANNED: "帳號已被停權",
   EMAIL_NOT_RULE: "Email 不符合規則",
   EMAIL_ALREADY_USED: "Email 已被使用",
   PASSWORD_NOT_RULE:
@@ -35,6 +36,8 @@ const ERROR_MESSAGES = {
   PRICE_RANGE_NOT_RULE:
     "價格區間格式錯誤，必須是合法的 JSON 陣列字串，請勿使用 00，且需由兩個數字組成，例如 [1000, 5000]",
   FINISH_CHECKOUT_FIRST: "請先完成結帳確認流程",
+  ORDER_ALREADY_USED_PLEASE_PAY_FIRST:
+    "您已有尚未付款的相同商品訂單，請先完成付款",
 };
 
 module.exports = ERROR_MESSAGES;
