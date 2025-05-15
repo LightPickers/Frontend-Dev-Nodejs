@@ -17,7 +17,6 @@ const {
 } = require("../utils/neWebPayCrypto");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
-const Coupons = require("../entities/Coupons");
 
 async function postOrder(req, res, next) {
   const { id: userId } = req.user;
@@ -125,11 +124,14 @@ async function postOrder(req, res, next) {
 }
 
 async function getOrder(req, res, next) {
-  // const user_id = req.user.id;
-  const { oder_id } = req.params;
+  const { order_id } = req.params;
 
   //400
-  if (isUndefined(oder_id) || !isValidString(oder_id) || !isUUID(oder_id, 4)) {
+  if (
+    isUndefined(order_id) ||
+    !isValidString(order_id) ||
+    !isUUID(order_id, 4)
+  ) {
     logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
     return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
@@ -138,53 +140,52 @@ async function getOrder(req, res, next) {
   const orderItemsRepo = dataSource.getRepository("Order_items");
 
   // 404
-  const existOrder = await checkOrder(ordersRepo, oder_id);
+  const existOrder = await checkOrder(ordersRepo, order_id);
   if (!existOrder) {
     logger.warn(ERROR_MESSAGES.DATA_NOT_FOUND);
     return next(new AppError(404, ERROR_MESSAGES.DATA_NOT_FOUND));
   }
 
   // 200
-  const orderInfo = await ordersRepo.findOne({
-    select: {
-      id: true,
-      created_at: true,
-      status: true,
-      amount: true,
-      Users: {
-        id: true,
-        name: true,
-        address_zipcode: true,
-        // address_city: true,
-        address_district: true,
-        address_detail: true,
-        phone: true,
-      },
-      Coupons: {
-        id: true,
-        discount: true,
-      },
-      shipping_method: true,
-      payment_method: true,
-      desired_date: true,
-    },
-    relations: { Users: true, Coupons: true },
-    where: { id: oder_id },
-  });
+  const orderInfo = await ordersRepo
+    .createQueryBuilder("order")
+    .leftJoinAndSelect("order.Users", "user")
+    .leftJoinAndSelect("order.Coupons", "coupon")
+    .select([
+      "order.id AS id",
+      "order.created_at AS created_at",
+      "order.status AS status",
+      "order.amount AS amount",
+      "user.id",
+      "user.name",
+      "user.address_zipcode",
+      // "user.address_city",
+      // "user.address_district",
+      "user.address_detail",
+      "user.phone",
+      "coupon.id",
+      "coupon.discount",
+      "order.shipping_method AS shipping_method",
+      "order.payment_method AS payment_method",
+      "order.desired_date AS desired_date",
+      "order.amount * (1 - COALESCE(coupon.discount, 0) * 0.1) AS discount_price",
+      "order.amount - (order.amount * (1 - COALESCE(coupon.discount, 0) * 0.1)) AS final_amount",
+    ])
+    .where("order.id = :order_id", { order_id })
+    .getRawOne();
 
-  const orderItems = await orderItemsRepo.find({
-    select: {
-      product_id: true,
-      Products: {
-        name: true,
-        primary_image: true,
-      },
-      price: true,
-      quantity: true,
-    },
-    relations: { Products: true },
-    where: { oder_id: oder_id },
-  });
+  const orderItems = await orderItemsRepo
+    .createQueryBuilder("orderItems")
+    .leftJoinAndSelect("orderItems.Products", "product")
+    .select([
+      "orderItems.product_id AS id",
+      "product.name AS name",
+      "product.primary_image AS primary_image",
+      "orderItems.price AS price",
+      "orderItems.quantity AS quantity",
+    ])
+    .where("orderItems.order_id = :order_id", { order_id })
+    .getRawMany();
 
   res.status(200).json({
     message: "成功",
