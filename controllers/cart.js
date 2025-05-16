@@ -52,7 +52,7 @@ async function getCart(req, res, next) {
   res.status(200).json({
     status: true,
     data: {
-      items: items.map(({ is_available, ...rest }) => rest),
+      items,
       amount,
     },
   });
