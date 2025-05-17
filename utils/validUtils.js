@@ -28,6 +28,10 @@ function isValidName(value) {
   return PATTERN_RULE.NAME_PATTERN.test(value);
 }
 
+function isValidId(value) {
+  return PATTERN_RULE.ID_PATTERN.test(value);
+}
+
 function isValidBirthDate(value) {
   if (!PATTERN_RULE.DATE_PATTERN.test(value)) return false;
 
@@ -51,13 +55,28 @@ function isValidBirthDate(value) {
   return true;
 }
 
-async function checkIfProductExists(favoritesRepo, userId, productId) {
+// 檢查商品是否已收藏
+async function checkIfProductSaved(favoritesRepo, userId, productId) {
   return await favoritesRepo.findOne({
     where: {
       Users: { id: userId },
       Products: { id: productId },
     },
     relations: ["Users", "Products"],
+  });
+}
+
+// 檢查商品是否存在
+async function checkProduct(productsRepo, product_id) {
+  return await productsRepo.findOne({
+    where: { id: product_id },
+  });
+}
+
+// 檢查訂單是否存在
+async function checkOrder(ordersRepo, order_id) {
+  return await ordersRepo.findOne({
+    where: { id: order_id },
   });
 }
 
@@ -70,6 +89,9 @@ module.exports = {
   isValidUrl,
   isValidPhone,
   isValidName,
+  isValidId,
   isValidBirthDate,
-  checkIfProductExists,
+  checkIfProductSaved,
+  checkProduct,
+  checkOrder,
 };

@@ -12,12 +12,14 @@ const db = require("./db");
 const web = require("./web");
 const secret = require("./secret");
 const redisSecret = require("./redisSecret");
+const neWebPaySecret = require("./neWebPaySecret");
 
 const config = {
   db,
   web,
   secret,
   redisSecret,
+  neWebPaySecret,
 };
 
 class ConfigManager {

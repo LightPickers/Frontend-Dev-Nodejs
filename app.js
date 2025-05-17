@@ -7,6 +7,11 @@ const logger = require("./utils/logger")("App");
 const usersRouter = require("./routes/users");
 const productsRouter = require("./routes/products.js");
 const cartRouter = require("./routes/cart.js");
+const ordersRouter = require("./routes/orders.js");
+const categoriesRouter = require("./routes/categories.js");
+const brandsRouter = require("./routes/brands.js");
+const conditionsRouter = require("./routes/conditions.js");
+const categoryRouter = require("./routes/category.js");
 
 const app = express();
 app.use(cors());
@@ -28,6 +33,11 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/products", productsRouter);
 app.use("/api/v1/cart", cartRouter);
+app.use("/api/v1/orders", ordersRouter);
+app.use("/api/v1/categories", categoriesRouter);
+app.use("/api/v1/conditions", brandsRouter);
+app.use("/api/v1/brands", conditionsRouter);
+app.use("/api/v1/category", categoryRouter);
 
 //404
 app.use((req, res, next) => {
