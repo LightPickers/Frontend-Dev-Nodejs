@@ -118,7 +118,7 @@ async function postOrder(req, res, next) {
     select: ["name"],
     where: { id: productId },
   });
-  const ItemDesc = `${productName.name}...等${cart_ids.length}項商品`;
+  const ItemDesc = `${productName.name}...等，共${cart_ids.length}項商品`;
   const TimeStamp = Math.round(new Date().getTime() / 1000);
   const neWedPayOrder = {
     Email: Email.email,
@@ -136,8 +136,8 @@ async function postOrder(req, res, next) {
       <input type="text" name="MerchantID" value="${config.get(
         "neWebPaySecret.merchantId"
       )}">
-      <input type="hidden" name="TradeInfo" value="${aesEncrypt}">
       <input type="hidden" name="TradeSha" value="${shaEncrypt}">
+      <input type="hidden" name="TradeInfo" value="${aesEncrypt}">
       <input type="text" name="TimeStamp" value="${neWedPayOrder.TimeStamp}">
       <input type="text" name="Version" value="${config.get(
         "neWebPaySecret.version"
@@ -146,6 +146,7 @@ async function postOrder(req, res, next) {
         neWedPayOrder.MerchantOrderNo
       }">
       <input type="text" name="Amt" value="${neWedPayOrder.Amt}">
+      <input type="text" name="ItemDesc" value="${neWedPayOrder.ItemDesc}">
       <input type="email" name="Email" value="${neWedPayOrder.Email}">
       <button type="submit">送出</button>
     </form>`;
