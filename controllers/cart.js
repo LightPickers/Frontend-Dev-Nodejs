@@ -137,7 +137,11 @@ async function postCartCheckout(req, res, next) {
 
     const usedCoupon = await orderRepo.findOne({
       select: ["id", "user_id", "coupon_id"],
-      where: { user_id: userId, coupon_id: coupon.id, status: "completed" },
+      where: {
+        user_id: userId,
+        coupon_id: coupon.id,
+        status: "已付款",
+      },
     });
 
     if (usedCoupon) {
