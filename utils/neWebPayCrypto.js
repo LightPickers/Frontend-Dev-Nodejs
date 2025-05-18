@@ -5,11 +5,11 @@ const RespondType = "JSON";
 function genDataChain(neWedPayOrder) {
   return `MerchantID=${config.get(
     "neWebPaySecret.merchantId"
-  )}&RespondType=${RespondType}&TimeStamp=${neWedPayOrder.TimeStamp}&
-      Version=${config.get("neWebPaySecret.version")}&MerchantOrderNo=${
+  )}&RespondType=${RespondType}&TimeStamp=${
+    neWedPayOrder.TimeStamp
+  }&Version=${config.get("neWebPaySecret.version")}&MerchantOrderNo=${
     neWedPayOrder.MerchantOrderNo
-  }&
-      Amt=${neWedPayOrder.Amt}&ItemDesc=${encodeURIComponent(
+  }&Amt=${neWedPayOrder.Amt}&ItemDesc=${encodeURIComponent(
     neWedPayOrder.ItemDesc
   )}&NotifyURL=${encodeURIComponent(config.get("neWebPaySecret.notifyUrl"))}`;
 }
