@@ -130,14 +130,18 @@ async function postOrder(req, res, next) {
     Amt: newOrder.amount,
     ItemDesc,
     TimeStamp,
-    MerchantOrderNo: newOrder.id,
+    MerchantOrderNo: TimeStamp,
   };
 
+  // 儲存 neWedPayOrder 至該訂單
+  newOrder.merchant_order_no = TimeStamp;
+  await dataSource.getRepository("Orders").save(newOrder);
+
   const aesEncrypt = create_mpg_aes_encrypt(neWedPayOrder);
-  const shaEncrypt = create_mpg_sha_encrypt(neWedPayOrder);
+  const shaEncrypt = create_mpg_sha_encrypt(aesEncrypt);
 
   const htmlForm = ` 
-    <form action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post">
+    <form id="newebpay-form" action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post">
       <input type="text" name="MerchantID" value="${config.get(
         "neWebPaySecret.merchantId"
       )}">
@@ -154,7 +158,8 @@ async function postOrder(req, res, next) {
       <input type="text" name="ItemDesc" value="${neWedPayOrder.ItemDesc}">
       <input type="email" name="Email" value="${neWedPayOrder.Email}">
       <button type="submit">送出</button>
-    </form>`;
+    </form>
+    <script>documnet.getElementById("newebpay-form").submit();</script>`;
 
   res.status(200).type("html").send(htmlForm);
 }
