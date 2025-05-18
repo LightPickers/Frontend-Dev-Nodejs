@@ -2,7 +2,7 @@ const { IsNull, In } = require("typeorm");
 const config = require("../config/index");
 const { dataSource } = require("../db/data-source");
 const redis = require("../utils/redis");
-const logger = require("../utils/logger")("Cart");
+const logger = require("../utils/logger")("CartController");
 const { isUndefined, isValidString } = require("../utils/validUtils");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
@@ -25,19 +25,10 @@ async function getCart(req, res, next) {
     .getMany();
 
   const items = cart.map(({ id, Products, price_at_time, quantity }) => {
-    let name = "商品已下架";
-    if (Products) {
-      if (Products.is_available === false) {
-        name = `${Products.name} (商品未供應)`;
-        quantity = "商品數量不足";
-      } else {
-        name = Products.name;
-      }
-    }
     return {
       id,
       primary_image: Products?.primary_image || "",
-      name,
+      name: Products.name,
       price_at_time,
       quantity,
       total_price: price_at_time * quantity,
@@ -52,7 +43,7 @@ async function getCart(req, res, next) {
   res.status(200).json({
     status: true,
     data: {
-      items: items.map(({ is_available, ...rest }) => rest),
+      items,
       amount,
     },
   });

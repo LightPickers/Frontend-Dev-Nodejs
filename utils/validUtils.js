@@ -73,6 +73,13 @@ async function checkProduct(productsRepo, product_id) {
   });
 }
 
+// 檢查訂單是否存在
+async function checkOrder(ordersRepo, order_id) {
+  return await ordersRepo.findOne({
+    where: { id: order_id },
+  });
+}
+
 module.exports = {
   isUndefined,
   isValidString,
@@ -86,4 +93,5 @@ module.exports = {
   isValidBirthDate,
   checkIfProductSaved,
   checkProduct,
+  checkOrder,
 };

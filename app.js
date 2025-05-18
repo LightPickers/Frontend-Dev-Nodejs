@@ -10,6 +10,9 @@ const cartRouter = require("./routes/cart.js");
 const ordersRouter = require("./routes/orders.js");
 const neWebPayRouter = require("./routes/neWebPay.js");
 const productsUtilsRouter = require("./routes/productsUtils.js");
+const categoriesRouter = require("./routes/categories.js");
+const brandsRouter = require("./routes/brands.js");
+const conditionsRouter = require("./routes/conditions.js");
 const categoryRouter = require("./routes/category.js");
 
 const app = express();
@@ -35,6 +38,9 @@ app.use("/api/v1/cart", cartRouter);
 app.use("/api/v1/orders", ordersRouter);
 app.use("/neWebPay", neWebPayRouter);
 app.use("/api/v1/productsUtils", productsUtilsRouter);
+app.use("/api/v1/categories", categoriesRouter);
+app.use("/api/v1/conditions", brandsRouter);
+app.use("/api/v1/brands", conditionsRouter);
 app.use("/api/v1/category", categoryRouter);
 
 //404
