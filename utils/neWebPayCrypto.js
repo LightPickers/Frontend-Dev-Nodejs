@@ -3,15 +3,16 @@ const config = require("../config/index");
 const RespondType = "JSON";
 
 function genDataChain(neWedPayOrder) {
-  return `MerchantID=${config.get(
-    "neWebPaySecret.merchantId"
-  )}&RespondType=${RespondType}&TimeStamp=${neWedPayOrder.TimeStamp}&
-      Version=${config.get("neWebPaySecret.version")}&MerchantOrderNo=${
-    neWedPayOrder.MerchantOrderNo
-  }&
-      Amt=${neWedPayOrder.Amt}&ItemDesc=${encodeURIComponent(
-    neWedPayOrder.ItemDesc
-  )}&NotifyURL=${encodeURIComponent(config.get("neWebPaySecret.notifyUrl"))}`;
+  return (
+    `MerchantID=${config.get("neWebPaySecret.merchantId")}` +
+    `&RespondType=${RespondType}` +
+    `&TimeStamp=${neWedPayOrder.TimeStamp}` +
+    `&Version=${config.get("neWebPaySecret.version")}` +
+    `&MerchantOrderNo=${neWedPayOrder.MerchantOrderNo}` +
+    `&Amt=${neWedPayOrder.Amt}` +
+    `&ItemDesc=${encodeURIComponent(neWedPayOrder.ItemDesc)}` +
+    `&NotifyURL=${encodeURIComponent(config.get("neWebPaySecret.notifyUrl"))}`
+  );
 }
 
 function create_mpg_aes_encrypt(TradeInfo) {
