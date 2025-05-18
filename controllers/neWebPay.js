@@ -1,9 +1,6 @@
-const config = require("../config/index");
 const { dataSource } = require("../db/data-source");
 const logger = require("../utils/logger")("NeWebPayController");
 const {
-  genDataChain,
-  create_mpg_aes_encrypt,
   create_mpg_sha_encrypt,
   create_mpg_aes_decrypt,
 } = require("../utils/neWebPayCrypto");
@@ -34,9 +31,11 @@ async function postNotify(req, res, next) {
   }
 
   const info = create_mpg_aes_decrypt(resData.TradeInfo); // 解密後的藍新交易資料
-  const neWebPayOrderId = info.Result.MerchantOrderNo; // 取出藍新回傳的order_id
+  const neWebPayMerchantOrderNo = info.Result.MerchantOrderNo; // 取出藍新回傳的order_id
   const orderRepo = dataSource.getRepository("Orders");
-  const checkOrder = await orderRepo.findOneBy({ id: neWebPayOrderId });
+  const checkOrder = await orderRepo.findOneBy({
+    merchant_order_no: neWebPayMerchantOrderNo,
+  });
   // 確認訂單是否存在
   if (!checkOrder) {
     logger.warn(`藍新訂單${ERROR_MESSAGES.DATA_NOT_FOUND}`);
