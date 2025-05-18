@@ -67,7 +67,7 @@ module.exports = new EntitySchema({
     },
     Coupons: {
       target: "Coupons",
-      type: "one-to-one",
+      type: "many-to-one",
       joinColumn: {
         name: "coupon_id",
         referencedColumnName: "id",
