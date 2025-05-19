@@ -31,7 +31,7 @@ async function postNotify(req, res, next) {
   }
 
   const info = create_mpg_aes_decrypt(resData.TradeInfo); // 解密後的藍新交易資料
-  const neWebPayMerchantOrderNo = info.Result.MerchantOrderNo; // 取出藍新回傳的order_id
+  const neWebPayMerchantOrderNo = info.Result.MerchantOrderNo; // 取出藍新回傳的 MerchantOrderNo
   const orderRepo = dataSource.getRepository("Orders");
   const checkOrder = await orderRepo.findOneBy({
     merchant_order_no: neWebPayMerchantOrderNo,
@@ -44,7 +44,7 @@ async function postNotify(req, res, next) {
   // 將資料寫入 payment
   const payment = dataSource.getRepository("Payment");
   const newPayment = await payment.create({
-    order_id: neWebPayOrderId,
+    order_id: checkOrder.id,
     user_id: checkOrder.user_id,
     transaction_id: info.Result.TradeNo,
     status: "付款成功",
