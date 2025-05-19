@@ -69,7 +69,7 @@ async function postOrder(req, res, next) {
       .where("cart.id IN (:...ids)", { ids: cart_ids })
       .getRawOne();
 
-    const amount = Number(result.total) || 0;
+    let amount = Number(result.total) || 0;
 
     //建立 Order 資料
     newOrder = await orderRepo.create({
@@ -86,7 +86,17 @@ async function postOrder(req, res, next) {
       newOrder.amount = Math.round(
         (amount / 10) * checkoutData.coupon.discount
       );
+      // 將使用的優惠券數量 -1
+      const couponRepo = manager.getRepository("Coupons");
+      const usingCoupon = await couponRepo.findOneBy({
+        id: newOrder.coupon_id,
+      });
+      console.log(usingCoupon);
+      usingCoupon.quantity -= 1;
+      await couponRepo.save(usingCoupon);
     }
+
+    newOrder.amount += 60; // 最後價格加上運費 60
 
     await orderRepo.save(newOrder);
 
