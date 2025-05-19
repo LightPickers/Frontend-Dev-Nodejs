@@ -1,4 +1,4 @@
-const { IsNull, In } = require("typeorm");
+const { In } = require("typeorm");
 const config = require("../config/index");
 const { dataSource } = require("../db/data-source");
 const redis = require("../utils/redis");
@@ -10,10 +10,8 @@ const {
   checkOrder,
 } = require("../utils/validUtils");
 const {
-  genDataChain,
   create_mpg_aes_encrypt,
   create_mpg_sha_encrypt,
-  create_mpg_aes_decrypt,
 } = require("../utils/neWebPayCrypto");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
@@ -71,7 +69,7 @@ async function postOrder(req, res, next) {
       .where("cart.id IN (:...ids)", { ids: cart_ids })
       .getRawOne();
 
-    const amount = Number(result.total) || 0;
+    let amount = Number(result.total) || 0;
 
     //建立 Order 資料
     newOrder = await orderRepo.create({
@@ -88,7 +86,17 @@ async function postOrder(req, res, next) {
       newOrder.amount = Math.round(
         (amount / 10) * checkoutData.coupon.discount
       );
+      // 將使用的優惠券數量 -1
+      const couponRepo = manager.getRepository("Coupons");
+      const usingCoupon = await couponRepo.findOneBy({
+        id: newOrder.coupon_id,
+      });
+      console.log(usingCoupon);
+      usingCoupon.quantity -= 1;
+      await couponRepo.save(usingCoupon);
     }
+
+    newOrder.amount += 60; // 最後價格加上運費 60
 
     await orderRepo.save(newOrder);
 
@@ -123,26 +131,30 @@ async function postOrder(req, res, next) {
     select: ["name"],
     where: { id: productId },
   });
-  const ItemDesc = `${productName.name}...等${cart_ids.length}項商品`;
+  const ItemDesc = `${productName.name}...等，共${cart_ids.length}項商品`;
   const TimeStamp = Math.round(new Date().getTime() / 1000);
   const neWedPayOrder = {
     Email: Email.email,
     Amt: newOrder.amount,
     ItemDesc,
     TimeStamp,
-    MerchantOrderNo: newOrder.id,
+    MerchantOrderNo: TimeStamp,
   };
 
+  // 儲存 neWedPayOrder 至該訂單
+  newOrder.merchant_order_no = TimeStamp;
+  await dataSource.getRepository("Orders").save(newOrder);
+
   const aesEncrypt = create_mpg_aes_encrypt(neWedPayOrder);
-  const shaEncrypt = create_mpg_sha_encrypt(neWedPayOrder);
+  const shaEncrypt = create_mpg_sha_encrypt(aesEncrypt);
 
   const htmlForm = ` 
-    <form action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post">
+    <form id="newebpay-form" action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post">
       <input type="text" name="MerchantID" value="${config.get(
         "neWebPaySecret.merchantId"
       )}">
-      <input type="hidden" name="TradeInfo" value="${aesEncrypt}">
       <input type="hidden" name="TradeSha" value="${shaEncrypt}">
+      <input type="hidden" name="TradeInfo" value="${aesEncrypt}">
       <input type="text" name="TimeStamp" value="${neWedPayOrder.TimeStamp}">
       <input type="text" name="Version" value="${config.get(
         "neWebPaySecret.version"
@@ -151,9 +163,11 @@ async function postOrder(req, res, next) {
         neWedPayOrder.MerchantOrderNo
       }">
       <input type="text" name="Amt" value="${neWedPayOrder.Amt}">
+      <input type="text" name="ItemDesc" value="${neWedPayOrder.ItemDesc}">
       <input type="email" name="Email" value="${neWedPayOrder.Email}">
       <button type="submit">送出</button>
-    </form>`;
+    </form>
+    <script>documnet.getElementById("newebpay-form").submit();</script>`;
 
   res.status(200).type("html").send(htmlForm);
 }

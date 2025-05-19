@@ -40,6 +40,11 @@ module.exports = new EntitySchema({
       type: "integer",
       nullable: false,
     },
+    merchant_order_no: {
+      type: "varchar",
+      length: 30,
+      nullable: true,
+    },
     cancelled_at: {
       type: "timestamp",
       nullable: true,
@@ -67,7 +72,7 @@ module.exports = new EntitySchema({
     },
     Coupons: {
       target: "Coupons",
-      type: "one-to-one",
+      type: "many-to-one",
       joinColumn: {
         name: "coupon_id",
         referencedColumnName: "id",

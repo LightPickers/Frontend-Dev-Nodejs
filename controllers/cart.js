@@ -116,19 +116,31 @@ async function postCartCheckout(req, res, next) {
 
   let coupon = null;
   if (couponCode) {
-    coupon = await couponRepo.findOne({
-      select: ["id", "code", "discount"],
-      where: { code: couponCode },
-    });
+    coupon = await couponRepo.findOneBy({ code: couponCode });
 
     if (!coupon) {
       logger.warn(`優惠券${ERROR_MESSAGES.DATA_NOT_FOUND}`);
       return next(new AppError(400, `優惠券${ERROR_MESSAGES.DATA_NOT_FOUND}`));
     }
 
+    // 判斷 現在 是否在 該優惠券使用範圍內（包含開始和結束日）
+    const now = new Date();
+    const startAt = new Date(coupon.start_at);
+    const endAt = new Date(coupon.end_at);
+
+    if (now < startAt || now > endAt) {
+      logger.warn(ERROR_MESSAGES.COUPON_PERIOD_ERROR);
+      return next(new AppError(400, ERROR_MESSAGES.COUPON_PERIOD_ERROR));
+    }
+
+    // 此優惠券已使用過
     const usedCoupon = await orderRepo.findOne({
       select: ["id", "user_id", "coupon_id"],
-      where: { user_id: userId, coupon_id: coupon.id, status: "completed" },
+      where: {
+        user_id: userId,
+        coupon_id: coupon.id,
+        status: "已付款",
+      },
     });
 
     if (usedCoupon) {
