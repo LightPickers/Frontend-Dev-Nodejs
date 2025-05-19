@@ -167,7 +167,7 @@ async function postOrder(req, res, next) {
       <input type="email" name="Email" value="${neWedPayOrder.Email}">
       <button type="submit">送出</button>
     </form>
-    <script>documnet.getElementById("newebpay-form").submit();</script>`;
+    <script>document.getElementById("newebpay-form").submit();</script>`;
 
   res.status(200).type("html").send(htmlForm);
 }
