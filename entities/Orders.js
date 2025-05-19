@@ -40,6 +40,11 @@ module.exports = new EntitySchema({
       type: "integer",
       nullable: false,
     },
+    merchant_order_no: {
+      type: "varchar",
+      length: 30,
+      nullable: true,
+    },
     cancelled_at: {
       type: "timestamp",
       nullable: true,

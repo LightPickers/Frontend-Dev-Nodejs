@@ -1,9 +1,6 @@
-const config = require("../config/index");
 const { dataSource } = require("../db/data-source");
 const logger = require("../utils/logger")("NeWebPayController");
 const {
-  genDataChain,
-  create_mpg_aes_encrypt,
   create_mpg_sha_encrypt,
   create_mpg_aes_decrypt,
 } = require("../utils/neWebPayCrypto");
@@ -14,13 +11,14 @@ async function postReturn(req, res, next) {
   const { TradeInfo } = req.body;
   const info = create_mpg_aes_decrypt(TradeInfo);
   const { Status, Result } = info;
-  const orderId = Result.MerchantOrderNo;
+  const order = await dataSource.getRepository("Orders").findOne({
+    select: ["id"],
+    where: { merchant_order_no: Result.MerchantOrderNo },
+  });
+  const orderId = order.id;
 
   // 根據狀態轉跳前端顯示畫面（以 React 頁面為例）
-  const redirectURL =
-    Status === "SUCCESS"
-      ? `https://lightpickers.github.io/Frontend-Dev-React/#/cart/payment-success?orderNo=${orderId}`
-      : `https://lightpickers.github.io/Frontend-Dev-React/#/cart/payment-failed?orderNo=${orderId}`;
+  const redirectURL = `https://lightpickers.github.io/Frontend-Dev-React/#/checkout/status/:orderId`;
 
   return res.redirect(redirectURL);
 }
@@ -34,9 +32,11 @@ async function postNotify(req, res, next) {
   }
 
   const info = create_mpg_aes_decrypt(resData.TradeInfo); // 解密後的藍新交易資料
-  const neWebPayOrderId = info.Result.MerchantOrderNo; // 取出藍新回傳的order_id
+  const neWebPayMerchantOrderNo = info.Result.MerchantOrderNo; // 取出藍新回傳的 MerchantOrderNo
   const orderRepo = dataSource.getRepository("Orders");
-  const checkOrder = await orderRepo.findOneBy({ id: neWebPayOrderId });
+  const checkOrder = await orderRepo.findOneBy({
+    merchant_order_no: neWebPayMerchantOrderNo,
+  });
   // 確認訂單是否存在
   if (!checkOrder) {
     logger.warn(`藍新訂單${ERROR_MESSAGES.DATA_NOT_FOUND}`);
@@ -45,7 +45,7 @@ async function postNotify(req, res, next) {
   // 將資料寫入 payment
   const payment = dataSource.getRepository("Payment");
   const newPayment = await payment.create({
-    order_id: neWebPayOrderId,
+    order_id: checkOrder.id,
     user_id: checkOrder.user_id,
     transaction_id: info.Result.TradeNo,
     status: "付款成功",
