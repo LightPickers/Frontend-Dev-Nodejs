@@ -11,13 +11,14 @@ async function postReturn(req, res, next) {
   const { TradeInfo } = req.body;
   const info = create_mpg_aes_decrypt(TradeInfo);
   const { Status, Result } = info;
-  const orderId = Result.MerchantOrderNo;
+  const order = await dataSource.getRepository("Orders").findOne({
+    select: ["id"],
+    where: { merchant_order_no: Result.MerchantOrderNo },
+  });
+  const orderId = order.id;
 
   // 根據狀態轉跳前端顯示畫面（以 React 頁面為例）
-  const redirectURL =
-    Status === "SUCCESS"
-      ? `https://lightpickers.github.io/Frontend-Dev-React/#/cart/payment-success?orderNo=${orderId}`
-      : `https://lightpickers.github.io/Frontend-Dev-React/#/cart/payment-failed?orderNo=${orderId}`;
+  const redirectURL = `https://lightpickers.github.io/Frontend-Dev-React/#/checkout/status/:orderId`;
 
   return res.redirect(redirectURL);
 }
