@@ -72,6 +72,7 @@ async function postNotify(req, res, next) {
     return product;
   });
   await productRepo.save(updatedProduct);
+  return res.status(200).send("OK");
 }
 
 module.exports = {
