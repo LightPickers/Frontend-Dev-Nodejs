@@ -18,7 +18,10 @@ async function postReturn(req, res, next) {
   const orderId = order.id;
 
   // 根據狀態轉跳前端顯示畫面（以 React 頁面為例）
-  const redirectURL = `https://lightpickers.github.io/Frontend-Dev-React/#/checkout/status/:orderId`;
+  let redirectURL;
+  if (Status === "SUCCESS") {
+    redirectURL = `https://lightpickers.github.io/Frontend-Dev-React/#/checkout/status/${orderId}`;
+  }
 
   return res.redirect(redirectURL);
 }
