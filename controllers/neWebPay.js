@@ -76,7 +76,7 @@ async function postNotify(req, res, next) {
         user_id: order.user_id,
         transaction_id: result.TradeNo,
         status: "付款成功",
-        paid_at: new Date(result.PayTime),
+        paid_at: result.PayTime,
       });
       await paymentRepo.save(newPayment);
 
