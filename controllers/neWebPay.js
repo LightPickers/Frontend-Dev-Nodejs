@@ -1,3 +1,4 @@
+const { In } = require("typeorm");
 const { dataSource } = require("../db/data-source");
 const logger = require("../utils/logger")("NeWebPayController");
 const {
@@ -8,18 +9,23 @@ const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 
 async function postReturn(req, res, next) {
-  const { TradeInfo } = req.body;
-  const info = create_mpg_aes_decrypt(TradeInfo);
-  const { Status, Result } = info;
+  const resData = req.body;
+  const info = create_mpg_aes_decrypt(resData.TradeInfo);
+  logger.info("藍新回傳解密 info: ", info);
+
   const order = await dataSource.getRepository("Orders").findOne({
     select: ["id"],
-    where: { merchant_order_no: Result.MerchantOrderNo },
+    where: { merchant_order_no: info.Result.MerchantOrderNo },
   });
+  if (!order) {
+    logger.warn(`找不到訂單 MerchantOrderNo: ${info.Result.MerchantOrderNo}`);
+    return next(new AppError(404, `訂單 ${ERROR_MESSAGES.DATA_NOT_FOUND}`));
+  }
   const orderId = order.id;
 
   // 根據狀態轉跳前端顯示畫面（以 React 頁面為例）
   let redirectURL;
-  if (Status === "SUCCESS") {
+  if (info.Status === "SUCCESS") {
     redirectURL = `https://lightpickers.github.io/Frontend-Dev-React/#/checkout/status/${orderId}`;
   }
 
@@ -27,6 +33,14 @@ async function postReturn(req, res, next) {
 }
 async function postNotify(req, res, next) {
   const resData = req.body;
+  logger.info("藍新 Notify body: ", req.body);
+
+  if (!resData.TradeInfo || !resData.TradeSha) {
+    logger.warn(ERROR_MESSAGES.TRADEINFO_OR_TRADESHA_NOT_FOUND);
+    return next(
+      new AppError(404, ERROR_MESSAGES.TRADEINFO_OR_TRADESHA_NOT_FOUND)
+    );
+  }
   const thisShaEncrypt = create_mpg_sha_encrypt(resData.TradeInfo); //再次加密回傳的字串
   // 比對 SHA 是否一致
   if (thisShaEncrypt !== resData.TradeSha) {
