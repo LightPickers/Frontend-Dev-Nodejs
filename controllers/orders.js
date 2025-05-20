@@ -149,22 +149,22 @@ async function postOrder(req, res, next) {
   const shaEncrypt = create_mpg_sha_encrypt(aesEncrypt);
 
   const htmlForm = ` 
-    <form id="newebpay-form" action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post">
-      <input type="text" name="MerchantID" value="${config.get(
+    <form id="newebpay-form" action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post" style="display: none;">
+      <input type="hidden" name="MerchantID" value="${config.get(
         "neWebPaySecret.merchantId"
       )}">
       <input type="hidden" name="TradeSha" value="${shaEncrypt}">
       <input type="hidden" name="TradeInfo" value="${aesEncrypt}">
-      <input type="text" name="TimeStamp" value="${neWedPayOrder.TimeStamp}">
-      <input type="text" name="Version" value="${config.get(
+      <input type="hidden" name="TimeStamp" value="${neWedPayOrder.TimeStamp}">
+      <input type="hidden" name="Version" value="${config.get(
         "neWebPaySecret.version"
       )}">
-      <input type="text" name="MerchantOrderNo" value="${
+      <input type="hidden" name="MerchantOrderNo" value="${
         neWedPayOrder.MerchantOrderNo
       }">
-      <input type="text" name="Amt" value="${neWedPayOrder.Amt}">
-      <input type="text" name="ItemDesc" value="${neWedPayOrder.ItemDesc}">
-      <input type="email" name="Email" value="${neWedPayOrder.Email}">
+      <input type="hidden" name="Amt" value="${neWedPayOrder.Amt}">
+      <input type="hidden" name="ItemDesc" value="${neWedPayOrder.ItemDesc}">
+      <input type="hidden" name="Email" value="${neWedPayOrder.Email}">
       <button type="submit">送出</button>
     </form>
     <script>document.getElementById("newebpay-form").submit();</script>`;
