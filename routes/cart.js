@@ -6,6 +6,7 @@ const auth = require("../middlewares/auth");
 const cartController = require("../controllers/cart");
 const handleErrorAsync = require("../utils/handleErrorAsync");
 
+router.post("/:product_id", auth, handleErrorAsync(cartController.addCart));
 router.get("/", auth, handleErrorAsync(cartController.getCart));
 router.delete(
   "/:cart_id",
