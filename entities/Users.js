@@ -53,10 +53,10 @@ module.exports = new EntitySchema({
       type: "text",
       nullable: false,
     },
-    // address_city: {
-    //   type: "text",
-    //   nullable: false,
-    // },
+    address_city: {
+      type: "text",
+      nullable: false,
+    },
     address_district: {
       type: "text",
       nullable: false,
