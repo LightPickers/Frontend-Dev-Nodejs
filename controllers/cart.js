@@ -39,8 +39,7 @@ async function addCart(req, res, next) {
 
   // 檢查商品是否有庫存
   const availableToSell = await checkInventory(productsRepo, product_id);
-  console.log(availableToSell);
-  if (availableToSell) {
+  if (!availableToSell) {
     logger.warn(ERROR_MESSAGES.PRODUCT_SOLDOUT);
     return next(new AppError(404, ERROR_MESSAGES.PRODUCT_SOLDOUT));
   }

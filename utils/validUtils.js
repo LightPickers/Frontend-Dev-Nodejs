@@ -75,11 +75,12 @@ async function checkProduct(productsRepo, product_id) {
 
 // 檢查商品是否有庫存
 async function checkInventory(productsRepo, product_id) {
-  return await productsRepo
+  const result = await productsRepo
     .createQueryBuilder("product")
     .select("product.is_available")
     .where("product.id = :product_id", { product_id })
     .getRawOne();
+  return result ? result.product_is_available : null;
 }
 
 // 檢查訂單是否存在
