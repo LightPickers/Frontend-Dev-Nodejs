@@ -161,7 +161,6 @@ async function login(req, res, next) {
   });
 }
 async function getUserProfile(req, res, next) {
-  console.log(req.user);
   const { id: userId } = req.user;
   const user = await dataSource.getRepository("Users").findOne({
     select: [
@@ -171,6 +170,7 @@ async function getUserProfile(req, res, next) {
       "gender",
       "birth_date",
       "address_zipcode",
+      "address_city",
       "address_district",
       "address_detail",
       "photo",
