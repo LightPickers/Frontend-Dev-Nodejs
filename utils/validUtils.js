@@ -55,6 +55,15 @@ function isValidBirthDate(value) {
   return true;
 }
 
+function isValidStringArray(arr) {
+  if (!Array.isArray(arr)) {
+    return false;
+  }
+  return arr.every((item) => !isUndefined(item) && isValidString(item));
+}
+
+module.exports = { isValidStringArray };
+
 // 檢查商品是否已收藏/加入購物車
 async function checkIfProductSaved(targetRepo, userId, productId) {
   return await targetRepo.findOne({
@@ -101,6 +110,7 @@ module.exports = {
   isValidName,
   isValidId,
   isValidBirthDate,
+  isValidStringArray,
   checkIfProductSaved,
   checkProduct,
   checkInventory,
