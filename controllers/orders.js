@@ -7,6 +7,7 @@ const { isUUID } = require("validator");
 const {
   isUndefined,
   isValidString,
+  isValidStringArray,
   checkOrder,
 } = require("../utils/validUtils");
 const {
@@ -19,10 +20,8 @@ const ERROR_MESSAGES = require("../utils/errorMessages");
 async function postOrder(req, res, next) {
   const { id: userId } = req.user;
   const { cart_ids } = req.body;
-  const isValidCartIds = cart_ids.every(
-    (id) => !isUndefined(id) && isValidString(id)
-  );
-  if (!isValidCartIds) {
+
+  if (!isValidStringArray(cart_ids)) {
     logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
     return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
