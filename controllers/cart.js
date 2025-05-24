@@ -1,5 +1,5 @@
-const { IsNull, In } = require("typeorm");
-const config = require("../config/index");
+// const { IsNull, In } = require("typeorm");
+// const config = require("../config/index");
 const { dataSource } = require("../db/data-source");
 const redis = require("../utils/redis");
 const logger = require("../utils/logger")("CartController");
@@ -10,6 +10,8 @@ const {
   checkIfProductSaved,
   checkInventory,
 } = require("../utils/validUtils");
+const { validateFields } = require("../utils/validateFields");
+const { CARTCHECKOUT_RULES } = require("../utils/validateRules");
 const { isUUID } = require("validator");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
@@ -81,6 +83,7 @@ async function getCart(req, res, next) {
       "cart.id",
       "cart.price_at_time",
       "cart.quantity",
+      "Products.id",
       "Products.name",
       "Products.primary_image",
       "Products.is_available",
@@ -91,6 +94,7 @@ async function getCart(req, res, next) {
     return {
       id,
       primary_image: Products?.primary_image || "",
+      product_id: Products.id,
       name: Products.name,
       price_at_time,
       quantity,
@@ -156,22 +160,32 @@ async function cleanCart(req, res, next) {
 async function postCartCheckout(req, res, next) {
   const { id: userId } = req.user;
   const {
+    name,
+    email,
+    address,
+    phone,
     shipping_method: shippingMethod,
     payment_method: paymentMethod,
     desired_date: desiredDate,
     coupon_code: couponCode,
   } = req.body;
 
-  if (
-    isUndefined(shippingMethod) ||
-    !isValidString(shippingMethod) ||
-    isUndefined(paymentMethod) ||
-    !isValidString(paymentMethod) ||
-    isUndefined(desiredDate) ||
-    !isValidString(desiredDate)
-  ) {
-    logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
-    return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+  const errorFields = validateFields(
+    {
+      name,
+      email,
+      address,
+      phone,
+      shippingMethod,
+      paymentMethod,
+      desiredDate,
+    },
+    CARTCHECKOUT_RULES
+  );
+  if (errorFields) {
+    const errorMessages = errorFields.join(", ");
+    logger.warn(errorMessages);
+    return next(new AppError(400, errorMessages));
   }
 
   const couponRepo = dataSource.getRepository("Coupons");
