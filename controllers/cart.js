@@ -83,6 +83,7 @@ async function getCart(req, res, next) {
       "cart.id",
       "cart.price_at_time",
       "cart.quantity",
+      "Products.id",
       "Products.name",
       "Products.primary_image",
       "Products.is_available",
@@ -93,6 +94,7 @@ async function getCart(req, res, next) {
     return {
       id,
       primary_image: Products?.primary_image || "",
+      product_id: Products.id,
       name: Products.name,
       price_at_time,
       quantity,
