@@ -230,7 +230,46 @@ async function getOrder(req, res, next) {
   });
 }
 
+async function getPaidOrder(req, res, next) {
+  const { order_id } = req.params;
+  ㄔ;
+  const { id: user_id } = req.user;
+  // 檢查用戶是否有權限
+  const userBanned = await dataSource.getRepository("Users").findOne({
+    select: ["is_banned"],
+    where: { id: user_id },
+  });
+  if (userBanned) {
+    logger.warn(ERROR_MESSAGES.NOT_AUTHORIZED_FOR_ORDER);
+    return next(new AppError(403, ERROR_MESSAGES.NOT_AUTHORIZED_FOR_ORDER));
+  }
+
+  // 檢查資料庫有無此訂單
+  const orderRepo = dataSource.getRepository("Orders");
+  const order = await orderRepo.findOneBy({ id: order_id });
+  if (!order) {
+    logger.warn(`付款失敗：訂單${ERROR_MESSAGES.DATA_NOT_FOUND}`);
+    return next(
+      new AppError(404, `付款失敗：訂單${ERROR_MESSAGES.DATA_NOT_FOUND}`)
+    );
+  }
+
+  res.status(200).json({
+    status: true,
+    message: "結帳成功",
+    data: {
+      id: order.id,
+      user_id: order.user_id,
+      merchant_order_no: order.merchant_order_no,
+      status: "已完成",
+      amount: order.amount,
+      created_at: order.created_at,
+    },
+  });
+}
+
 module.exports = {
   postOrder,
   getOrder,
+  getPaidOrder,
 };
