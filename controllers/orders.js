@@ -248,20 +248,18 @@ async function getPaidOrder(req, res, next) {
   const orderRepo = dataSource.getRepository("Orders");
   const order = await orderRepo.findOneBy({ id: order_id });
   if (!order) {
-    logger.warn(`付款失敗：訂單${ERROR_MESSAGES.DATA_NOT_FOUND}`);
-    return next(
-      new AppError(404, `付款失敗：訂單${ERROR_MESSAGES.DATA_NOT_FOUND}`)
-    );
+    logger.warn(`訂單${ERROR_MESSAGES.DATA_NOT_FOUND}`);
+    return next(new AppError(404, `訂單${ERROR_MESSAGES.DATA_NOT_FOUND}`));
   }
 
   res.status(200).json({
     status: true,
-    message: "結帳成功",
+    message: "訂單取得成功",
     data: {
       id: order.id,
       user_id: order.user_id,
       merchant_order_no: order.merchant_order_no,
-      status: "已完成",
+      status: order.status,
       amount: order.amount,
       created_at: order.created_at,
     },
