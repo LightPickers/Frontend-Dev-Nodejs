@@ -40,6 +40,7 @@ const ERROR_MESSAGES = {
   FINISH_CHECKOUT_FIRST: "請先完成結帳確認流程",
   ORDER_ALREADY_USED_PLEASE_PAY_FIRST:
     "您已有尚未付款的相同商品訂單，請先完成付款",
+  NOT_AUTHORIZED_FOR_ORDER: "您未被授權存取此訂單",
   PAY_FAILED_TREADSHA_NOT_SAME: "付款失敗，TreadSha 不一致",
   COUPON_PERIOD_ERROR: "現在不在此優惠券使用期間，無法使用",
   TRADEINFO_OR_TRADESHA_NOT_FOUND: "缺少 TradeInfo 或 TradeSha",
