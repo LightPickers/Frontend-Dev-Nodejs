@@ -22,7 +22,9 @@ const ERROR_MESSAGES = {
   BIRTH_DATE_NOT_RULE: "生日格式不正確或超出合理範圍（yyyy-mm-dd）",
   DUPLICATE_FAVORITES: "商品已加入收藏資料",
   FAVORITE_NOT_FOUND: "商品未加入收藏資料",
+  DUPLICATE_ADD_TO_CART: "商品已在購物車內",
   DATA_NOT_FOUND: "資料不存在",
+  PRODUCT_SOLDOUT: "商品已無庫存",
   DATA_ALREADY_USED: "資料已被使用",
   DATA_NOT_DELETE: "資料未刪除",
   REDIS_WRITE_FAILED: "Redis 寫入失敗",
@@ -39,6 +41,9 @@ const ERROR_MESSAGES = {
   ORDER_ALREADY_USED_PLEASE_PAY_FIRST:
     "您已有尚未付款的相同商品訂單，請先完成付款",
   NOT_AUTHORIZED_FOR_ORDER: "您未被授權存取此訂單",
+  PAY_FAILED_TREADSHA_NOT_SAME: "付款失敗，TreadSha 不一致",
+  COUPON_PERIOD_ERROR: "現在不在此優惠券使用期間，無法使用",
+  TRADEINFO_OR_TRADESHA_NOT_FOUND: "缺少 TradeInfo 或 TradeSha",
 };
 
 module.exports = ERROR_MESSAGES;
