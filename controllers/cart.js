@@ -160,10 +160,6 @@ async function cleanCart(req, res, next) {
 async function postCartCheckout(req, res, next) {
   const { id: userId } = req.user;
   const {
-    name,
-    email,
-    address,
-    phone,
     shipping_method: shippingMethod,
     payment_method: paymentMethod,
     desired_date: desiredDate,
@@ -172,10 +168,6 @@ async function postCartCheckout(req, res, next) {
 
   const errorFields = validateFields(
     {
-      name,
-      email,
-      address,
-      phone,
       shippingMethod,
       paymentMethod,
       desiredDate,
