@@ -1,11 +1,76 @@
-const { IsNull, In } = require("typeorm");
-const config = require("../config/index");
+// const { IsNull, In } = require("typeorm");
+// const config = require("../config/index");
 const { dataSource } = require("../db/data-source");
 const redis = require("../utils/redis");
 const logger = require("../utils/logger")("CartController");
-const { isUndefined, isValidString } = require("../utils/validUtils");
+const {
+  isUndefined,
+  isValidString,
+  checkProduct,
+  checkIfProductSaved,
+  checkInventory,
+} = require("../utils/validUtils");
+const { validateFields } = require("../utils/validateFields");
+const { CARTCHECKOUT_RULES } = require("../utils/validateRules");
+const { isUUID } = require("validator");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
+
+async function addCart(req, res, next) {
+  const user_id = req.user.id;
+  const { product_id } = req.params;
+
+  if (
+    isUndefined(product_id) ||
+    !isValidString(product_id) ||
+    !isUUID(product_id, 4)
+  ) {
+    logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
+    return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+  }
+
+  const productsRepo = dataSource.getRepository("Products");
+  const cartRepo = dataSource.getRepository("Cart");
+
+  // 檢查商品是否存在
+  const existProduct = await checkProduct(productsRepo, product_id);
+  if (!existProduct) {
+    logger.warn(ERROR_MESSAGES.DATA_NOT_FOUND);
+    return next(new AppError(404, ERROR_MESSAGES.DATA_NOT_FOUND));
+  }
+
+  // 檢查商品是否有庫存
+  const availableToSell = await checkInventory(productsRepo, product_id);
+  if (!availableToSell) {
+    logger.warn(ERROR_MESSAGES.PRODUCT_SOLDOUT);
+    return next(new AppError(404, ERROR_MESSAGES.PRODUCT_SOLDOUT));
+  }
+
+  // 檢查商品是否已被儲存於購物車中
+  const productSaved = await checkIfProductSaved(cartRepo, user_id, product_id);
+
+  if (productSaved) {
+    logger.warn(ERROR_MESSAGES.DUPLICATE_ADD_TO_CART);
+    return next(new AppError(409, ERROR_MESSAGES.DUPLICATE_ADD_TO_CART));
+  }
+
+  const productPrice = await productsRepo.findOne({
+    select: ["selling_price"],
+    where: { id: product_id },
+  });
+  const addCart = await cartRepo.create({
+    Users: { id: user_id },
+    Products: { id: product_id },
+    price_at_time: productPrice.selling_price,
+    quantity: 1,
+  });
+  await cartRepo.save(addCart);
+
+  res.status(200).json({
+    status: "true",
+    message: "商品成功加入購物車",
+  });
+}
 
 async function getCart(req, res, next) {
   const { id: userId } = req.user;
@@ -18,6 +83,7 @@ async function getCart(req, res, next) {
       "cart.id",
       "cart.price_at_time",
       "cart.quantity",
+      "Products.id",
       "Products.name",
       "Products.primary_image",
       "Products.is_available",
@@ -28,6 +94,7 @@ async function getCart(req, res, next) {
     return {
       id,
       primary_image: Products?.primary_image || "",
+      product_id: Products.id,
       name: Products.name,
       price_at_time,
       quantity,
@@ -93,22 +160,32 @@ async function cleanCart(req, res, next) {
 async function postCartCheckout(req, res, next) {
   const { id: userId } = req.user;
   const {
+    name,
+    email,
+    address,
+    phone,
     shipping_method: shippingMethod,
     payment_method: paymentMethod,
     desired_date: desiredDate,
     coupon_code: couponCode,
   } = req.body;
 
-  if (
-    isUndefined(shippingMethod) ||
-    !isValidString(shippingMethod) ||
-    isUndefined(paymentMethod) ||
-    !isValidString(paymentMethod) ||
-    isUndefined(desiredDate) ||
-    !isValidString(desiredDate)
-  ) {
-    logger.warn(ERROR_MESSAGES.FIELDS_INCORRECT);
-    return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
+  const errorFields = validateFields(
+    {
+      name,
+      email,
+      address,
+      phone,
+      shippingMethod,
+      paymentMethod,
+      desiredDate,
+    },
+    CARTCHECKOUT_RULES
+  );
+  if (errorFields) {
+    const errorMessages = errorFields.join(", ");
+    logger.warn(errorMessages);
+    return next(new AppError(400, errorMessages));
   }
 
   const couponRepo = dataSource.getRepository("Coupons");
@@ -186,6 +263,7 @@ async function postCartCheckout(req, res, next) {
 }
 
 module.exports = {
+  addCart,
   getCart,
   deleteCartProduct,
   cleanCart,

@@ -18,5 +18,6 @@ router.post(
   auth,
   handleErrorAsync(cartController.postCartCheckout)
 );
+router.post("/:product_id", auth, handleErrorAsync(cartController.addCart));
 
 module.exports = router;
