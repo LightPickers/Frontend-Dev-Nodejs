@@ -62,8 +62,6 @@ function isValidStringArray(arr) {
   return arr.every((item) => !isUndefined(item) && isValidString(item));
 }
 
-module.exports = { isValidStringArray };
-
 // 檢查商品是否已收藏/加入購物車
 async function checkIfProductSaved(targetRepo, userId, productId) {
   return await targetRepo.findOne({

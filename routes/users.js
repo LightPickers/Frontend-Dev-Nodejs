@@ -13,6 +13,7 @@ router.put(
   auth,
   handleErrorAsync(usersController.updateUserProfile)
 );
+router.put("/password", auth, handleErrorAsync(usersController.putPassword)); // 修改密碼
 
 router.post("/favorites", auth, handleErrorAsync(savedList.addToSavedList)); // 新增收藏資料
 router.get("/favorites", auth, handleErrorAsync(savedList.getSavedList)); // 取得收藏資料
