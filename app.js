@@ -5,6 +5,7 @@ const pinoHttp = require("pino-http");
 
 const logger = require("./utils/logger")("App");
 const usersRouter = require("./routes/users");
+const emailRouter = require("./routes/email");
 const productsRouter = require("./routes/products.js");
 const cartRouter = require("./routes/cart.js");
 const ordersRouter = require("./routes/orders.js");
@@ -32,6 +33,7 @@ app.use(
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/v1/users", usersRouter);
+app.use("/api/v1/email", emailRouter);
 app.use("/api/v1/products", productsRouter);
 app.use("/api/v1/cart", cartRouter);
 app.use("/api/v1/orders", ordersRouter);
