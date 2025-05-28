@@ -10,7 +10,12 @@ const CARTCHECKOUT_RULES = {
   desiredDate: "string",
 };
 
+const EMAIL_RULE = {
+  to: "string",
+};
+
 module.exports = {
   PUTPASSWORD_RULE,
   CARTCHECKOUT_RULES,
+  EMAIL_RULE,
 };
