@@ -302,6 +302,7 @@ async function getSpecificProducts(req, res, next) {
       summary: true,
       primary_image: true,
       selling_price: true,
+      original_price: true,
     },
     relations: {
       Categories: true,
