@@ -13,6 +13,7 @@ const categoriesRouter = require("./routes/categories.js");
 const brandsRouter = require("./routes/brands.js");
 const conditionsRouter = require("./routes/conditions.js");
 const categoryRouter = require("./routes/category.js");
+const uploadRouter = require("./routes/upload");
 
 const app = express();
 app.use(cors());
@@ -40,6 +41,7 @@ app.use("/api/v1/categories", categoriesRouter);
 app.use("/api/v1/conditions", conditionsRouter);
 app.use("/api/v1/brands", brandsRouter);
 app.use("/api/v1/category", categoryRouter);
+app.use("/api/v1/upload/image", uploadRouter);
 
 //404
 app.use((req, res, next) => {
