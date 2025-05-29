@@ -454,6 +454,7 @@ async function putResetPassword(req, res, next) {
   // 驗證欄位
   const errorFields = validateFields(
     {
+      token,
       newPassword,
       comfirmNewPassword,
     },

@@ -5,6 +5,7 @@ const PUTPASSWORD_RULE = {
 };
 
 const RESETPASSWORD_RULE = {
+  token: "string",
   newPassword: "string",
   comfirmNewPassword: "string",
 };
