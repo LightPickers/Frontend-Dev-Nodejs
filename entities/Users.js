@@ -13,6 +13,11 @@ module.exports = new EntitySchema({
       type: "uuid",
       nullable: false,
     },
+    googleId: {
+      type: "varchar",
+      length: 50,
+      nullable: true,
+    },
     name: {
       type: "varchar",
       length: 50,
@@ -27,7 +32,7 @@ module.exports = new EntitySchema({
     password: {
       type: "varchar",
       length: 72,
-      nullable: false,
+      nullable: true,
       select: false,
     },
     photo: {
@@ -38,32 +43,32 @@ module.exports = new EntitySchema({
     gender: {
       type: "varchar",
       length: 10,
-      nullable: false,
+      nullable: true,
     },
     birth_date: {
       type: "date",
-      nullable: false,
+      nullable: true,
     },
     phone: {
       type: "varchar",
       length: 20,
-      nullable: false,
+      nullable: true,
     },
     address_zipcode: {
       type: "text",
-      nullable: false,
+      nullable: true,
     },
     address_city: {
       type: "text",
-      nullable: false,
+      nullable: true,
     },
     address_district: {
       type: "text",
-      nullable: false,
+      nullable: true,
     },
     address_detail: {
       type: "text",
-      nullable: false,
+      nullable: true,
     },
     is_banned: {
       type: "boolean",

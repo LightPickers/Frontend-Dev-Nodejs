@@ -8,6 +8,7 @@ const ERROR_MESSAGES = {
   USER_IS_BANNED: "帳號已被停權",
   EMAIL_NOT_RULE: "Email 不符合規則",
   EMAIL_ALREADY_USED: "Email 已被使用",
+  EMAIL_NOT_READ: "無法讀取信件內容",
   PASSWORD_NOT_RULE:
     "密碼不符合規則，包含英文大小寫和數字，長度最少 8 字、最多 16 個字",
   USER_NOT_FOUND_OR_PASSWORD_FALSE: "使用者不存在或密碼輸入錯誤",
