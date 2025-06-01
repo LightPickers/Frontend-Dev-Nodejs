@@ -46,7 +46,7 @@ module.exports = new EntitySchema({
       nullable: false,
     },
     summary: {
-      type: "jsonb",
+      type: "text",
       nullable: false,
     },
     primary_image: {
