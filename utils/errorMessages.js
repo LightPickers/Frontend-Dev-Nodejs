@@ -8,10 +8,14 @@ const ERROR_MESSAGES = {
   USER_IS_BANNED: "帳號已被停權",
   EMAIL_NOT_RULE: "Email 不符合規則",
   EMAIL_ALREADY_USED: "Email 已被使用",
+  EMAIL_NOT_READ: "無法讀取信件內容",
   PASSWORD_NOT_RULE:
     "密碼不符合規則，包含英文大小寫和數字，長度最少 8 字、最多 16 個字",
   USER_NOT_FOUND_OR_PASSWORD_FALSE: "使用者不存在或密碼輸入錯誤",
   PASSWORD_FALSE: "密碼輸入錯誤",
+  PASSWORD_NEW_AND_OLD_NOT_SAME: "新密碼不能與舊密碼相同",
+  PASSWORD_NEW_AND_VERIFIEDNEW_NOT_SAME: "新密碼與驗證新密碼不一致",
+  UPDATE_PASSWORD_FAILED: "更新密碼失敗",
   USER_NOT_SIGNUP: "使用者尚未登入",
   EXPIRED_TOKEN: "Token 已過期",
   INVALID_TOKEN: "無效的 Token",
@@ -44,6 +48,8 @@ const ERROR_MESSAGES = {
   PAY_FAILED_TREADSHA_NOT_SAME: "付款失敗，TreadSha 不一致",
   COUPON_PERIOD_ERROR: "現在不在此優惠券使用期間，無法使用",
   TRADEINFO_OR_TRADESHA_NOT_FOUND: "缺少 TradeInfo 或 TradeSha",
+  FILE_SIZE: "檔案大小超過 2MB 限制",
+  FILE_UPLOAD: "上傳檔案時發生錯誤",
 };
 
 module.exports = ERROR_MESSAGES;

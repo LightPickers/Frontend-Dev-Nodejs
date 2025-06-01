@@ -5,6 +5,8 @@ const pinoHttp = require("pino-http");
 
 const logger = require("./utils/logger")("App");
 const usersRouter = require("./routes/users");
+const emailRouter = require("./routes/email");
+const authRouter = require("./routes/auth");
 const productsRouter = require("./routes/products.js");
 const cartRouter = require("./routes/cart.js");
 const ordersRouter = require("./routes/orders.js");
@@ -13,6 +15,7 @@ const categoriesRouter = require("./routes/categories.js");
 const brandsRouter = require("./routes/brands.js");
 const conditionsRouter = require("./routes/conditions.js");
 const categoryRouter = require("./routes/category.js");
+const uploadRouter = require("./routes/upload");
 
 const app = express();
 app.use(cors());
@@ -32,6 +35,8 @@ app.use(
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/v1/users", usersRouter);
+app.use("/api/v1/email", emailRouter);
+app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/products", productsRouter);
 app.use("/api/v1/cart", cartRouter);
 app.use("/api/v1/orders", ordersRouter);
@@ -40,6 +45,7 @@ app.use("/api/v1/categories", categoriesRouter);
 app.use("/api/v1/conditions", conditionsRouter);
 app.use("/api/v1/brands", brandsRouter);
 app.use("/api/v1/category", categoryRouter);
+app.use("/api/v1/upload/image", uploadRouter);
 
 //404
 app.use((req, res, next) => {

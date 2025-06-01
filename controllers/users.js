@@ -19,6 +19,9 @@ const {
   isValidPhone,
   isValidBirthDate,
 } = require("../utils/validUtils");
+const { validateFields } = require("../utils/validateFields");
+const { validatePasswordRule } = require("../utils/validatePasswordRule");
+const { PUTPASSWORD_RULE } = require("../utils/validateRules");
 
 async function signup(req, res, next) {
   try {
@@ -31,11 +34,16 @@ async function signup(req, res, next) {
       });
     }
 
+    // 從資料庫取得 使用者的 資料id
+    const roleUser = await dataSource
+      .getRepository("Roles")
+      .findOneBy({ name: "使用者" });
+
     const userData = {
       ...req.body,
       photo: req.body.photo || null,
       is_banned: false,
-      role_id: "84f0e762-ff1c-4197-b525-c8ec22de8dd5",
+      role_id: roleUser.id,
     };
 
     const userRepository = dataSource.getRepository("Users");
@@ -342,6 +350,95 @@ async function updateUserProfile(req, res, next) {
     data: result,
   });
 }
+
+async function putPassword(req, res, next) {
+  const { id: userId } = req.user;
+  const {
+    password,
+    new_password: newPassword,
+    comfirm_new_password: comfirmNewPassword,
+  } = req.body;
+
+  // 驗證欄位
+  const errorFields = validateFields(
+    {
+      password,
+      newPassword,
+      comfirmNewPassword,
+    },
+    PUTPASSWORD_RULE
+  );
+  if (errorFields) {
+    const errorMessages = errorFields.join(", ");
+    logger.warn(errorMessages);
+    return next(new AppError(400, errorMessages));
+  }
+
+  // 驗證密碼規則
+  const errorPasswords = validatePasswordRule({
+    password,
+    newPassword,
+    comfirmNewPassword,
+  });
+  if (errorPasswords) {
+    const errorMessages = errorPasswords.join(", ");
+    logger.warn(`建立使用者錯誤: ${errorMessages}`);
+    return next(new AppError(400, errorMessages));
+  }
+
+  const userRepo = dataSource.getRepository("Users");
+  const user = await userRepo.findOne({
+    select: ["id", "password"],
+    where: { id: userId },
+  });
+  // 舊密碼是否符合 於資料庫的用戶密碼
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    logger.warn(`建立使用者錯誤: ${ERROR_MESSAGES.PASSWORD_FALSE}`);
+    return next(new AppError(400, ERROR_MESSAGES.PASSWORD_FALSE));
+  }
+
+  // 舊密碼與新密碼是否相同
+  if (password === newPassword) {
+    logger.warn(
+      `建立使用者錯誤: ${ERROR_MESSAGES.PASSWORD_NEW_AND_OLD_NOT_SAME}`
+    );
+    return next(
+      new AppError(400, ERROR_MESSAGES.PASSWORD_NEW_AND_OLD_NOT_SAME)
+    );
+  }
+
+  // 新密碼是否與確認新密碼相同
+  if (newPassword !== comfirmNewPassword) {
+    logger.warn(
+      `建立使用者錯誤: ${ERROR_MESSAGES.PASSWORD_NEW_AND_VERIFIEDNEW_NOT_SAME}`
+    );
+    return next(
+      new AppError(400, ERROR_MESSAGES.PASSWORD_NEW_AND_VERIFIEDNEW_NOT_SAME)
+    );
+  }
+
+  // 將新密碼加密後，更新使用者資料
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  const updatePassword = await userRepo.update(
+    {
+      id: userId,
+    },
+    {
+      password: hashedPassword,
+    }
+  );
+  if (updatePassword.affected === 0) {
+    logger.warn(`建立使用者錯誤: ${ERROR_MESSAGES.UPDATE_PASSWORD_FAILED}`);
+    return next(new AppError(400, ERROR_MESSAGES.UPDATE_PASSWORD_FAILED));
+  }
+
+  res.status(200).json({
+    status: true,
+    data: null,
+  });
+}
+
 async function verifyAuth(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer")) {
@@ -390,4 +487,5 @@ module.exports = {
   getUserProfile,
   updateUserProfile,
   verifyAuth,
+  putPassword,
 };

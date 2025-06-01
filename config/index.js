@@ -13,6 +13,7 @@ const web = require("./web");
 const secret = require("./secret");
 const redisSecret = require("./redisSecret");
 const neWebPaySecret = require("./neWebPaySecret");
+const google = require("./google");
 
 const config = {
   db,
@@ -20,6 +21,7 @@ const config = {
   secret,
   redisSecret,
   neWebPaySecret,
+  google,
 };
 
 class ConfigManager {
