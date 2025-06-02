@@ -4,11 +4,15 @@ const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
-const ALLOWED_FILE_TYPES = [".jpg", ".jpeg", ".png"];
+const MAX_FILE = 5;
+const ALLOWED_FILE_TYPES = [".jpg", ".jpeg", ".png", ".webp"];
+const API_KEY = "files";
 
 const upload = multer({
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: MAX_FILE_SIZE,
+    files: MAX_FILE,
   },
 
   fileFilter(req, file, cb) {
@@ -18,7 +22,7 @@ const upload = multer({
     }
     cb(null, true);
   },
-}).any();
+}).array(API_KEY, MAX_FILE);
 
 module.exports = (req, res, next) => {
   upload(req, res, (err) => {
