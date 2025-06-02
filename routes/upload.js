@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.post(
   "/",
-  // isAuth,
+  isAuth,
   upload,
   handleErrorAsync(uploadController.postUploadImage)
 );
