@@ -15,13 +15,15 @@ const {
   isValidEmail,
   isValidPassword,
   isValidName,
-  isValidUrl,
   isValidPhone,
   isValidBirthDate,
 } = require("../utils/validUtils");
 const { validateFields } = require("../utils/validateFields");
 const { validatePasswordRule } = require("../utils/validatePasswordRule");
-const { PUTPASSWORD_RULE } = require("../utils/validateRules");
+const {
+  PUTPASSWORD_RULE,
+  RESETPASSWORD_RULE,
+} = require("../utils/validateRules");
 
 async function signup(req, res, next) {
   try {
@@ -98,6 +100,7 @@ async function signup(req, res, next) {
     });
   }
 }
+
 async function login(req, res, next) {
   const { email, password } = req.body;
 
@@ -168,6 +171,7 @@ async function login(req, res, next) {
     },
   });
 }
+
 async function getUserProfile(req, res, next) {
   const { id: userId } = req.user;
   const user = await dataSource.getRepository("Users").findOne({
@@ -193,6 +197,7 @@ async function getUserProfile(req, res, next) {
     },
   });
 }
+
 async function updateUserProfile(req, res, next) {
   const { id: userId } = req.user;
   const {
@@ -435,7 +440,83 @@ async function putPassword(req, res, next) {
 
   res.status(200).json({
     status: true,
-    data: null,
+    message: "密碼修改成功",
+  });
+}
+
+async function putResetPassword(req, res, next) {
+  const { token } = req.query;
+  const {
+    new_password: newPassword,
+    comfirm_new_password: comfirmNewPassword,
+  } = req.body;
+
+  // 驗證欄位
+  const errorFields = validateFields(
+    {
+      token,
+      newPassword,
+      comfirmNewPassword,
+    },
+    RESETPASSWORD_RULE
+  );
+  if (errorFields) {
+    const errorMessages = errorFields.join(", ");
+    logger.warn(errorMessages);
+    return next(new AppError(400, errorMessages));
+  }
+
+  // 驗證密碼規則
+  const errorPasswords = validatePasswordRule({
+    newPassword,
+    comfirmNewPassword,
+  });
+  if (errorPasswords) {
+    const errorMessages = errorPasswords.join(", ");
+    logger.warn(`建立使用者錯誤: ${errorMessages}`);
+    return next(new AppError(400, errorMessages));
+  }
+
+  const decoded = jwt.verify(token, config.get("secret.jwtSecret")); // 驗證 token
+
+  const userRepo = dataSource.getRepository("Users");
+  const user = await userRepo.findOne({
+    select: ["id", "name", "email"],
+    where: { email: decoded.email },
+  });
+  if (!user) {
+    logger.warn(ERROR_MESSAGES.USER_NOT_FOUND);
+    return next(new AppError(404, ERROR_MESSAGES.USER_NOT_FOUND));
+  }
+
+  // 新密碼是否與確認新密碼相同
+  if (newPassword !== comfirmNewPassword) {
+    logger.warn(
+      `建立使用者錯誤: ${ERROR_MESSAGES.PASSWORD_NEW_AND_VERIFIEDNEW_NOT_SAME}`
+    );
+    return next(
+      new AppError(400, ERROR_MESSAGES.PASSWORD_NEW_AND_VERIFIEDNEW_NOT_SAME)
+    );
+  }
+
+  // 將新密碼加密後，更新使用者資料
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  const updatePassword = await userRepo.update(
+    {
+      id: user.id,
+    },
+    {
+      password: hashedPassword,
+    }
+  );
+  if (updatePassword.affected === 0) {
+    logger.warn(`建立使用者錯誤: ${ERROR_MESSAGES.UPDATE_PASSWORD_FAILED}`);
+    return next(new AppError(400, ERROR_MESSAGES.UPDATE_PASSWORD_FAILED));
+  }
+
+  res.status(200).json({
+    status: true,
+    message: "重設密碼成功",
   });
 }
 
@@ -486,6 +567,7 @@ module.exports = {
   login,
   getUserProfile,
   updateUserProfile,
-  verifyAuth,
   putPassword,
+  putResetPassword,
+  verifyAuth,
 };
