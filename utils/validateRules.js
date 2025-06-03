@@ -4,6 +4,12 @@ const PUTPASSWORD_RULE = {
   comfirmNewPassword: "string",
 };
 
+const RESETPASSWORD_RULE = {
+  token: "string",
+  newPassword: "string",
+  comfirmNewPassword: "string",
+};
+
 const CARTCHECKOUT_RULES = {
   shippingMethod: "string",
   paymentMethod: "string",
@@ -16,6 +22,7 @@ const EMAIL_RULE = {
 
 module.exports = {
   PUTPASSWORD_RULE,
+  RESETPASSWORD_RULE,
   CARTCHECKOUT_RULES,
   EMAIL_RULE,
 };
