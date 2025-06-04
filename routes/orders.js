@@ -8,6 +8,10 @@ const handleErrorAsync = require("../utils/handleErrorAsync");
 
 router.post("/", auth, handleErrorAsync(ordersController.postOrder));
 router.get("/:order_id", handleErrorAsync(ordersController.getOrder));
-router.get("/paid/:order_id", handleErrorAsync(ordersController.getPaidOrder));
+router.get(
+  "/paid/:order_id",
+  auth,
+  handleErrorAsync(ordersController.getPaidOrder)
+);
 
 module.exports = router;
