@@ -245,7 +245,6 @@ async function getOrder(req, res, next) {
 
 async function getPaidOrder(req, res, next) {
   const { order_id } = req.params;
-  ㄔ;
   const { id: user_id } = req.user;
   // 檢查用戶是否有權限
   const userBanned = await dataSource.getRepository("Users").findOne({
