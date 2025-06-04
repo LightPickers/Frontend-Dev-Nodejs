@@ -42,7 +42,7 @@ module.exports = new EntitySchema({
       nullable: false,
     },
     description: {
-      type: "text",
+      type: "jsonb",
       nullable: false,
     },
     summary: {
