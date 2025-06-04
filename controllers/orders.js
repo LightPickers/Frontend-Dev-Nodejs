@@ -245,13 +245,10 @@ async function getOrder(req, res, next) {
 
 async function getPaidOrder(req, res, next) {
   const { order_id } = req.params;
-  const { id: user_id } = req.user;
+  const { is_banned } = req.user;
+
   // 檢查用戶是否有權限
-  const userBanned = await dataSource.getRepository("Users").findOne({
-    select: ["is_banned"],
-    where: { id: user_id },
-  });
-  if (userBanned) {
+  if (is_banned) {
     logger.warn(ERROR_MESSAGES.NOT_AUTHORIZED_FOR_ORDER);
     return next(new AppError(403, ERROR_MESSAGES.NOT_AUTHORIZED_FOR_ORDER));
   }
