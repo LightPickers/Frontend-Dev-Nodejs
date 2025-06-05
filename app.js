@@ -2,8 +2,9 @@ const express = require("express");
 const path = require("path");
 const cors = require("cors");
 const pinoHttp = require("pino-http");
-
 const logger = require("./utils/logger")("App");
+require("./crons/orderExpire.cron");
+
 const usersRouter = require("./routes/users");
 const emailRouter = require("./routes/email");
 const authRouter = require("./routes/auth");
