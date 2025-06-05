@@ -10,10 +10,7 @@ const {
   isValidStringArray,
   checkOrder,
 } = require("../utils/validUtils");
-const {
-  create_mpg_aes_encrypt,
-  create_mpg_sha_encrypt,
-} = require("../utils/neWebPayCrypto");
+const { generateNewebpayForm } = require("../utils/generateNewebpayForm");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 
@@ -26,54 +23,89 @@ async function postOrder(req, res, next) {
     return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
 
-  const data = await redis.get(`checkout:${userId}`);
-  if (!data) {
-    return next(new AppError(400, ERROR_MESSAGES.FINISH_CHECKOUT_FIRST));
-  }
-  const checkoutData = JSON.parse(data);
+  const cartRepo = dataSource.getRepository("Cart");
+  const usersRepo = dataSource.getRepository("Users");
+  const productsRepo = dataSource.getRepository("Products");
 
-  // 檢查是否已有 未付款的相同商品訂單
-  const carts = await dataSource.getRepository("Cart").find({
+  // 從 req.body 的 cartIds 取得 productIds
+  const carts = await cartRepo.find({
     where: { id: In(cart_ids) },
   });
   const productIds = carts.map((cart) => cart.product_id);
 
-  const existingOrder = await dataSource
+  // 檢查 cartIds 裡，是否有未供應的商品
+  const count = await productsRepo.count({
+    where: {
+      id: In(productIds),
+      is_available: false,
+    },
+  });
+  if (count > 0) {
+    logger.warn(ERROR_MESSAGES.PRODUCT_SOLDOUT);
+    return next(new AppError(400, ERROR_MESSAGES.PRODUCT_SOLDOUT));
+  }
+
+  // 取得 Redis 暫存資料
+  const checkoutDataJson = await redis.get(`checkout:${userId}`);
+  if (!checkoutDataJson) {
+    return next(new AppError(400, ERROR_MESSAGES.FINISH_CHECKOUT_FIRST));
+  }
+  const checkoutData = JSON.parse(checkoutDataJson);
+
+  // 檢查是否已有 待付款 的相同商品訂單
+  const pendingOrder = await dataSource
     .getRepository("Orders")
     .createQueryBuilder("order")
     .innerJoin("Order_items", "item", "item.order_id = order.id")
     .where("order.user_id = :userId", { userId })
-    .andWhere("order.status = :status", { status: "待付款" })
+    .andWhere("order.status = :status", { status: "pending" })
     .andWhere("item.product_id IN (:...productIds)", { productIds })
     .getOne();
 
-  if (existingOrder) {
-    logger.warn(ERROR_MESSAGES.ORDER_ALREADY_USED_PLEASE_PAY_FIRST);
-    return next(
-      new AppError(400, ERROR_MESSAGES.ORDER_ALREADY_USED_PLEASE_PAY_FIRST)
+  // 有相同訂單，直接回傳藍新資料，進入藍新頁面完成付款
+  if (pendingOrder) {
+    const user = await usersRepo.findOne({
+      select: ["email"],
+      where: { id: userId },
+    });
+    const product = await productsRepo.findOne({
+      select: ["name"],
+      where: { id: productIds[0] },
+    });
+
+    // 回傳給藍新的 htmlform
+    const { html } = generateNewebpayForm(
+      pendingOrder,
+      product.name,
+      user.email,
+      cart_ids.length
     );
+    return res.status(200).type("html").send(html);
   }
 
+  // 開始建立新訂單
   let newOrder;
 
+  // ACID: 使用 transaction 讓操作全部成功才提交，否則回滾。
   await dataSource.transaction(async (manager) => {
     const cartRepo = manager.getRepository("Cart");
     const orderRepo = manager.getRepository("Orders");
     const orderItemsRepo = manager.getRepository("Order_items");
+    const couponRepo = manager.getRepository("Coupons");
 
-    // 計算付款總額 amount
-    const result = await cartRepo
+    // 計算付款總額 totalAmount
+    const totalAmount = await cartRepo
       .createQueryBuilder("cart")
       .select("SUM(cart.price_at_time)", "total")
       .where("cart.id IN (:...ids)", { ids: cart_ids })
       .getRawOne();
 
-    let amount = Number(result.total) || 0;
+    let amount = Number(totalAmount.total) || 0;
 
     //建立 Order 資料
-    newOrder = await orderRepo.create({
+    newOrder = orderRepo.create({
       user_id: userId,
-      status: "待付款",
+      status: "pending",
       desired_date: checkoutData.desiredDate,
       shipping_method: checkoutData.shippingMethod,
       payment_method: checkoutData.paymentMethod,
@@ -86,23 +118,17 @@ async function postOrder(req, res, next) {
         (amount / 10) * checkoutData.coupon.discount
       );
       // 將使用的優惠券數量 -1
-      const couponRepo = manager.getRepository("Coupons");
       const usingCoupon = await couponRepo.findOneBy({
         id: newOrder.coupon_id,
       });
-      console.log(usingCoupon);
       usingCoupon.quantity -= 1;
       await couponRepo.save(usingCoupon);
     }
 
-    newOrder.amount += 60; // 最後價格加上運費 60
-
+    newOrder.amount += 60; // 最後價格 加上運費 60
     await orderRepo.save(newOrder);
 
     // 將 cart 品項整理好，存入 Order_items
-    const carts = await cartRepo.find({
-      where: { id: In(cart_ids) },
-    });
     const orderItemsData = carts.map((cart) => ({
       order_id: newOrder.id,
       product_id: cart.product_id,
@@ -112,63 +138,36 @@ async function postOrder(req, res, next) {
     await orderItemsRepo.save(orderItemsData);
   });
 
+  // 資料確定存入新訂單後，刪除 redis 暫存
   await redis.del(`checkout:${userId}`);
 
-  const cartRepo = dataSource.getRepository("Cart");
+  // 設定 Redis key 表示訂單狀態是 pending，TTL 30 分鐘
+  // key -> order: pending: <orderId>
+  await redis.set(`order:pending:${newOrder.id}`, "pending", { EX: 1800 });
 
-  // 藍新金流
-  const Email = await dataSource.getRepository("Users").findOne({
+  // 建立 藍新金流 所需資料
+  const user = await usersRepo.findOne({
     select: ["email"],
     where: { id: userId },
   });
-  const cartItem = await cartRepo.findOne({
-    select: ["product_id"],
-    where: { id: cart_ids[0] },
-  });
-  const productId = cartItem.product_id;
-  const productName = await dataSource.getRepository("Products").findOne({
+  const product = await productsRepo.findOne({
     select: ["name"],
-    where: { id: productId },
+    where: { id: productIds[0] },
   });
-  const ItemDesc = `${productName.name}...等，共${cart_ids.length}項商品`;
-  const TimeStamp = Math.round(new Date().getTime() / 1000);
-  const neWedPayOrder = {
-    Email: Email.email,
-    Amt: newOrder.amount,
-    ItemDesc,
-    TimeStamp,
-    MerchantOrderNo: TimeStamp,
-  };
+
+  // 回傳給藍新的 htmlform
+  const { html, merchantOrderNo } = generateNewebpayForm(
+    newOrder,
+    product.name,
+    user.email,
+    cart_ids.length
+  );
 
   // 儲存 neWedPayOrder 至該訂單
-  newOrder.merchant_order_no = TimeStamp;
+  newOrder.merchant_order_no = merchantOrderNo;
   await dataSource.getRepository("Orders").save(newOrder);
 
-  const aesEncrypt = create_mpg_aes_encrypt(neWedPayOrder);
-  const shaEncrypt = create_mpg_sha_encrypt(aesEncrypt);
-
-  const htmlForm = ` 
-    <form id="newebpay-form" action="https://ccore.newebpay.com/MPG/mpg_gateway" method="post" style="display: none;">
-      <input type="hidden" name="MerchantID" value="${config.get(
-        "neWebPaySecret.merchantId"
-      )}">
-      <input type="hidden" name="TradeSha" value="${shaEncrypt}">
-      <input type="hidden" name="TradeInfo" value="${aesEncrypt}">
-      <input type="hidden" name="TimeStamp" value="${neWedPayOrder.TimeStamp}">
-      <input type="hidden" name="Version" value="${config.get(
-        "neWebPaySecret.version"
-      )}">
-      <input type="hidden" name="MerchantOrderNo" value="${
-        neWedPayOrder.MerchantOrderNo
-      }">
-      <input type="hidden" name="Amt" value="${neWedPayOrder.Amt}">
-      <input type="hidden" name="ItemDesc" value="${neWedPayOrder.ItemDesc}">
-      <input type="hidden" name="Email" value="${neWedPayOrder.Email}">
-      <button type="submit">送出</button>
-    </form>
-    <script>document.getElementById("newebpay-form").submit();</script>`;
-
-  res.status(200).type("html").send(htmlForm);
+  res.status(200).type("html").send(html);
 }
 
 async function getOrder(req, res, next) {
