@@ -79,7 +79,7 @@ async function getCart(req, res, next) {
   const cart = await dataSource
     .getRepository("Cart")
     .createQueryBuilder("cart")
-    .leftJoinAndSelect("cart.Products", "Products")
+    .innerJoinAndSelect("cart.Products", "Products")
     .where("cart.user_id = :userId", { userId })
     .select([
       "cart.id",
@@ -93,21 +93,27 @@ async function getCart(req, res, next) {
     .getMany();
 
   const items = cart.map(({ id, Products, price_at_time, quantity }) => {
+    const {
+      id: product_id,
+      name,
+      primary_image,
+      is_available,
+    } = Products || {};
     return {
       id,
-      primary_image: Products?.primary_image || "",
-      product_id: Products.id,
-      name: Products.name,
+      primary_image: primary_image || "",
+      product_id,
+      name: name,
       price_at_time,
       quantity,
       total_price: price_at_time * quantity,
-      is_available: Products?.is_available,
+      is_available: is_available,
     };
   });
 
-  const amount = items
-    .filter((item) => item.is_available)
-    .reduce((sum, item) => sum + item.total_price, 0);
+  const amount = items.reduce((sum, item) => {
+    return item.is_available ? sum + item.total_price : sum;
+  }, 0);
 
   res.status(200).json({
     status: true,
@@ -206,9 +212,9 @@ async function postCartCheckout(req, res, next) {
     }
 
     // 判斷 現在 是否在 該優惠券使用範圍內（包含開始和結束日）
-    const now = new Date();
-    const startAt = new Date(coupon.start_at);
-    const endAt = new Date(coupon.end_at);
+    const now = Date.now();
+    const startAt = new Date(coupon.start_at).getTime();
+    const endAt = new Date(coupon.end_at).getTime();
 
     if (now < startAt || now > endAt) {
       logger.warn(ERROR_MESSAGES.COUPON_PERIOD_ERROR);
@@ -217,7 +223,7 @@ async function postCartCheckout(req, res, next) {
 
     // 此優惠券已使用過
     const usedCoupon = await orderRepo.findOne({
-      select: ["id", "user_id", "coupon_id"],
+      select: ["id"],
       where: {
         user_id: userId,
         coupon_id: coupon.id,
