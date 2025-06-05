@@ -121,6 +121,7 @@ async function getSavedList(req, res, next) {
         id: true,
         name: true,
         selling_price: true,
+        original_price: true,
         primary_image: true,
         is_available: true,
         updated_at: true,
