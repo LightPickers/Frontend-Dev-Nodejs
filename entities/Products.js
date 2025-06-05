@@ -47,6 +47,7 @@ module.exports = new EntitySchema({
     },
     summary: {
       type: "text",
+      array: true,
       nullable: false,
     },
     primary_image: {
