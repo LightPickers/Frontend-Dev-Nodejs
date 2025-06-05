@@ -12,6 +12,8 @@ const {
 } = require("../utils/validUtils");
 const { validateFields } = require("../utils/validateFields");
 const { CARTCHECKOUT_RULES } = require("../utils/validateRules");
+const { isValidPaymentMethod } = require("../utils/validPaymentMethod");
+const { isValidShippingMethod } = require("../utils/validShippingMethod");
 const { isUUID } = require("validator");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
@@ -180,6 +182,17 @@ async function postCartCheckout(req, res, next) {
     return next(new AppError(400, errorMessages));
   }
 
+  // 驗證寄送方式
+  if (!isValidShippingMethod(shippingMethod)) {
+    logger.warn(ERROR_MESSAGES.SHIPPING_METHOD_NOT_RULE);
+    return next(new AppError(400, ERROR_MESSAGES.SHIPPING_METHOD_NOT_RULE));
+  }
+  // 驗證付款方式
+  if (!isValidPaymentMethod(paymentMethod)) {
+    logger.warn(ERROR_MESSAGES.PAYMENT_METHOD_NOT_RULE);
+    return next(new AppError(400, ERROR_MESSAGES.PAYMENT_METHOD_NOT_RULE));
+  }
+
   const couponRepo = dataSource.getRepository("Coupons");
   const orderRepo = dataSource.getRepository("Orders");
 
@@ -208,7 +221,7 @@ async function postCartCheckout(req, res, next) {
       where: {
         user_id: userId,
         coupon_id: coupon.id,
-        status: "已付款",
+        status: "paid",
       },
     });
 
