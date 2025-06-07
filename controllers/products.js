@@ -10,7 +10,7 @@ const { isValidId, isValidInteger } = require("../utils/validUtils");
 const {
   isUndefined,
   isValidString,
-  checkProduct,
+  checkProductStatus,
 } = require("../utils/validUtils");
 // const { ServerDescription } = require("typeorm");
 // const Categories = require("../entities/Categories");
@@ -160,12 +160,17 @@ async function getProducts(req, res, next) {
       "product.primary_image",
       "product.created_at",
     ])
+    .where(
+      "product.is_deleted = :is_deleted AND product.is_available = :is_available",
+      { is_deleted: false, is_available: true }
+    )
     .orderBy("product.created_at", "DESC")
     .skip(offset)
     .take(pageSizeInt)
     .getManyAndCount();
 
   const total_pages = Math.ceil(total / pageSizeInt);
+  console.log(total);
 
   if (pageInt > total_pages && total_pages > 0) {
     logger.warn(ERROR_MESSAGES.PAGE_OUT_OF_RANGE);
@@ -206,7 +211,12 @@ async function getFeaturedProducts(req, res, next) {
       Brands: true,
       Conditions: true,
     },
-    where: { is_featured: true },
+    where: {
+      is_featured: true,
+      is_sold: false,
+      is_deleted: false,
+      is_available: true,
+    },
   });
 
   const result = featuredProducts.map((product) => ({
@@ -239,6 +249,7 @@ async function getLatestProducts(req, res, next) {
   }
 
   const latestProducts = await dataSource.getRepository("Products").find({
+    where: { is_sold: false, is_deleted: false, is_available: true },
     relations: {
       Conditions: true,
     },
@@ -281,10 +292,13 @@ async function getSpecificProducts(req, res, next) {
   const imagesRepo = dataSource.getRepository("Product_images");
 
   // 404
-  const existProduct = await checkProduct(productsRepo, product_id);
-  if (!existProduct) {
-    logger.warn(ERROR_MESSAGES.DATA_NOT_FOUND);
-    return next(new AppError(404, ERROR_MESSAGES.DATA_NOT_FOUND));
+  const productStatus = await checkProductStatus(
+    productsRepo,
+    product_id,
+    false
+  );
+  if (!productStatus.success) {
+    return next(new AppError(404, productStatus.error));
   }
 
   // 200
@@ -303,6 +317,9 @@ async function getSpecificProducts(req, res, next) {
       primary_image: true,
       selling_price: true,
       original_price: true,
+      is_available: true,
+      is_sold: true,
+      is_deleted: true,
     },
     relations: {
       Categories: true,

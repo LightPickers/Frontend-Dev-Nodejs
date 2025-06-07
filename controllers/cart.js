@@ -6,9 +6,8 @@ const logger = require("../utils/logger")("CartController");
 const {
   isUndefined,
   isValidString,
-  checkProduct,
+  checkProductStatus,
   checkIfProductSaved,
-  checkInventory,
 } = require("../utils/validUtils");
 const { validateFields } = require("../utils/validateFields");
 const { CARTCHECKOUT_RULES } = require("../utils/validateRules");
@@ -32,6 +31,16 @@ async function addCart(req, res, next) {
   const productsRepo = dataSource.getRepository("Products");
   const cartRepo = dataSource.getRepository("Cart");
 
+  // 檢查商品狀態(是否存在、刪除、下架、庫存(若第3個參數為true))
+  const productStatus = await checkProductStatus(
+    productsRepo,
+    product_id,
+    true
+  );
+  if (!productStatus.success) {
+    return next(new AppError(404, productStatus.error));
+  }
+  /*
   // 檢查商品是否存在
   const existProduct = await checkProduct(productsRepo, product_id);
   if (!existProduct) {
@@ -45,6 +54,7 @@ async function addCart(req, res, next) {
     logger.warn(ERROR_MESSAGES.PRODUCT_SOLDOUT);
     return next(new AppError(404, ERROR_MESSAGES.PRODUCT_SOLDOUT));
   }
+  */
 
   // 檢查商品是否已被儲存於購物車中
   const productSaved = await checkIfProductSaved(cartRepo, user_id, product_id);
@@ -87,6 +97,8 @@ async function getCart(req, res, next) {
       "Products.name",
       "Products.primary_image",
       "Products.is_available",
+      "Products.is_sold",
+      "Products.is_deleted",
     ])
     .getMany();
 
@@ -100,6 +112,8 @@ async function getCart(req, res, next) {
       quantity,
       total_price: price_at_time * quantity,
       is_available: Products?.is_available,
+      is_sold: Products?.is_sold,
+      is_deleted: Products?.is_deleted,
     };
   });
 
