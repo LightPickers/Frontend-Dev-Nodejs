@@ -1,6 +1,7 @@
 const cron = require("node-cron");
 const { dataSource } = require("../db/data-source");
-const redis = require("../utils/redis");
+const { LessThan } = require("typeorm");
+const { redis, isRedisConnected } = require("../utils/redis");
 const logger = require("../utils/logger")("OrderExpire.cron");
 
 async function cancelExpiredOrders() {
@@ -33,21 +34,47 @@ async function cancelExpiredOrders() {
           await orderRepo.save(order);
           logger.info(`訂單 ${orderId} 超時未付款，已自動取消`);
         }
-        // 如果該訂單有使用優惠券，將已取消的優惠券數量補回去
-        if (order.coupon_id) {
-          const couponRepo = dataSource.getRepository("Coupons");
-          const coupon = await couponRepo.findOneBy({ id: order.coupon_id });
-          if (coupon) {
-            coupon.quantity++;
-            await couponRepo.save(coupon);
-          }
-        }
       }
     }
   } while (cursor !== "0");
 }
 
+async function fallbackCancelExpiredOrders() {
+  const orderRepo = dataSource.getRepository("Orders");
+
+  // 取得 30 分鐘前的時間
+  const cutoffTime = new Date(Date.now() - 30 * 60 * 1000);
+
+  const expiredOrders = await orderRepo.find({
+    where: {
+      status: "pending",
+      created_at: LessThan(cutoffTime), // 當訂單建立時間 早於(小於) 30 分鐘前的時間
+    },
+  });
+
+  for (const order of expiredOrders) {
+    order.status = "canceled";
+    order.canceled_at = new Date().toISOString();
+    await orderRepo.save(order);
+    logger.info(`[資料庫備援] 訂單 ${order.id} 超過 30 分鐘未付款，自動取消`);
+  }
+}
+
 // 每分鐘執行一次
 cron.schedule("* * * * *", () => {
-  cancelExpiredOrders().catch(console.error);
+  try {
+    if (isRedisConnected()) {
+      cancelExpiredOrders();
+    } else {
+      fallbackCancelExpiredOrders();
+    }
+  } catch (err) {
+    logger.error("排程執行錯誤：", err);
+  }
+});
+
+// 每小時執行一次
+cron.schedule("0 * * * *", () => {
+  logger.info("[資料庫備援] 開始執行過期訂單補掃...");
+  fallbackCancelExpiredOrders().catch(console.error);
 });
