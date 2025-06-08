@@ -53,6 +53,8 @@ const ERROR_MESSAGES = {
   TRADEINFO_OR_TRADESHA_NOT_FOUND: "缺少 TradeInfo 或 TradeSha",
   FILE_SIZE: "檔案大小超過 2MB 限制",
   FILE_UPLOAD: "上傳檔案時發生錯誤",
+  PAYMENT_METHOD_NOT_RULE: "付款方式 不符合規則",
+  SHIPPING_METHOD_NOT_RULE: "寄送方式 不符合規則",
 };
 
 module.exports = ERROR_MESSAGES;
