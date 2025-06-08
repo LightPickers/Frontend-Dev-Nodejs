@@ -242,6 +242,23 @@ async function getOrder(req, res, next) {
   });
 }
 
+async function getAllOrders(req, res, next) {
+  const { id: user_id } = req.user;
+
+  const orders = await dataSource.getRepository("Orders").find({
+    select: ["id", "status", "payment_method", "amount", "created_at"],
+    where: { user_id },
+    order: {
+      created_at: "DESC",
+    },
+  });
+
+  res.status(200).json({
+    status: "true",
+    data: orders,
+  });
+}
+
 async function getPaidOrder(req, res, next) {
   const { order_id } = req.params;
   const { is_banned } = req.user;
@@ -277,5 +294,6 @@ async function getPaidOrder(req, res, next) {
 module.exports = {
   postOrder,
   getOrder,
+  getAllOrders,
   getPaidOrder,
 };
