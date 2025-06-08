@@ -25,12 +25,8 @@ async function postReturn(req, res, next) {
   }
   const orderId = order.id;
 
-  // 根據狀態轉跳前端顯示畫面
-  let redirectURL;
-  if (info.Status === "SUCCESS") {
-    redirectURL = `https://lightpickers.github.io/Frontend-Dev-React/#/checkout/status/${orderId}`;
-  }
-
+  // 轉跳前端顯示畫面
+  const redirectURL = `https://lightpickers.github.io/Frontend-Dev-React/#/checkout/status/${orderId}`;
   return res.redirect(redirectURL);
 }
 
