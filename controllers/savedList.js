@@ -6,7 +6,10 @@ const ERROR_MESSAGES = require("../utils/errorMessages");
 const {
   isUndefined,
   isValidString,
-  checkProduct,
+  // checkExisted,
+  // checkDeleted,
+  // checkListed,
+  checkProductStatus,
   checkIfProductSaved,
 } = require("../utils/validUtils");
 
@@ -26,12 +29,38 @@ async function addToSavedList(req, res, next) {
   const productsRepo = dataSource.getRepository("Products");
   const favoritesRepo = dataSource.getRepository("Favorites");
 
+  // 檢查商品狀態(是否存在、刪除、下架、庫存(若第3個參數為true))
+  const productStatus = await checkProductStatus(
+    productsRepo,
+    product_id,
+    false
+  );
+  if (!productStatus.success) {
+    return next(new AppError(404, productStatus.error));
+  }
+
+  /*
   // 檢查商品是否存在
-  const existProduct = await checkProduct(productsRepo, product_id);
+  const existProduct = await checkExisted(productsRepo, product_id);
   if (!existProduct) {
     logger.warn(ERROR_MESSAGES.DATA_NOT_FOUND);
     return next(new AppError(404, ERROR_MESSAGES.DATA_NOT_FOUND));
   }
+
+  // 檢查商品是否刪除
+  const deletedProduct = await checkDeleted(productsRepo, product_id);
+  if (!deletedProduct) {
+    logger.warn(ERROR_MESSAGES.PRODCUT_DELETED);
+    return next(new AppError(404, ERROR_MESSAGES.PRODCUT_DELETED));
+  }
+
+  // 檢查商品是否上架
+  const listedProduct = await checkListed(productsRepo, product_id);
+  if (!listedProduct) {
+    logger.warn(ERROR_MESSAGES.PRODUCT_DELISTED);
+    return next(new AppError(404, ERROR_MESSAGES.PRODUCT_DELISTED));
+  }
+  */
 
   // 檢查商品是否已被儲存於儲存清單中
   const productSaved = await checkIfProductSaved(
@@ -112,6 +141,7 @@ async function getSavedList(req, res, next) {
     orderBy = "DESC";
   }
 
+  /*
   const savedList = await favoritesRepo.find({
     where: { Users: { id: user_id } },
     relations: ["Products"],
@@ -124,15 +154,40 @@ async function getSavedList(req, res, next) {
         original_price: true,
         primary_image: true,
         is_available: true,
+        is_sold: true,
+        is_deleted: true,
         updated_at: true,
       },
       created_at: true,
     },
     order: { [sortBy]: orderBy },
   });
+  */
 
+  const savedList = await favoritesRepo
+    .createQueryBuilder("favorites")
+    .leftJoinAndSelect("favorites.Products", "product")
+    .leftJoinAndSelect("Cart", "cart", "cart.product_id = product.id") // Join Cart
+    .select([
+      "favorites.id",
+      "favorites.created_at",
+      "product.id",
+      "product.name",
+      "product.selling_price",
+      "product.original_price",
+      "product.primary_image",
+      "product.is_available",
+      "product.is_sold",
+      "product.is_deleted",
+      "product.updated_at",
+      "cart.product_id", // Fetch product_id from Cart
+    ])
+    .where("favorites.Users = :user_id", { user_id })
+    .orderBy(`favorites.${sortBy}`, orderBy)
+    .getRawMany();
+  console.log(savedList);
   const totalPrice = savedList.reduce(
-    (sum, item) => sum + item.Products.selling_price,
+    (sum, item) => sum + item.product_selling_price,
     0
   ); //計算收藏清單中的商品價格總額
 

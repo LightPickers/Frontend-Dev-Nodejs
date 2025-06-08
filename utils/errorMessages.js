@@ -27,8 +27,11 @@ const ERROR_MESSAGES = {
   DUPLICATE_FAVORITES: "商品已加入收藏資料",
   FAVORITE_NOT_FOUND: "商品未加入收藏資料",
   DUPLICATE_ADD_TO_CART: "商品已在購物車內",
+  CART_ADD_FAIL: "商品無法加入購物車",
   DATA_NOT_FOUND: "資料不存在",
   PRODUCT_SOLDOUT: "商品已無庫存",
+  PRODUCT_DELISTED: "商品已下架",
+  PRODUCT_DELETED: "商品已刪除",
   DATA_ALREADY_USED: "資料已被使用",
   DATA_NOT_DELETE: "資料未刪除",
   REDIS_WRITE_FAILED: "Redis 寫入失敗",
@@ -50,6 +53,8 @@ const ERROR_MESSAGES = {
   TRADEINFO_OR_TRADESHA_NOT_FOUND: "缺少 TradeInfo 或 TradeSha",
   FILE_SIZE: "檔案大小超過 2MB 限制",
   FILE_UPLOAD: "上傳檔案時發生錯誤",
+  PAYMENT_METHOD_NOT_RULE: "付款方式 不符合規則",
+  SHIPPING_METHOD_NOT_RULE: "寄送方式 不符合規則",
 };
 
 module.exports = ERROR_MESSAGES;

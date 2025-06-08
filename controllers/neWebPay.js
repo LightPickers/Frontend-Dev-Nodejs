@@ -1,6 +1,7 @@
 const { In } = require("typeorm");
 const { dataSource } = require("../db/data-source");
 const logger = require("../utils/logger")("NeWebPayController");
+const redis = require("../utils/redis");
 const {
   create_mpg_sha_encrypt,
   create_mpg_aes_decrypt,
@@ -24,14 +25,11 @@ async function postReturn(req, res, next) {
   }
   const orderId = order.id;
 
-  // 根據狀態轉跳前端顯示畫面（以 React 頁面為例）
-  let redirectURL;
-  if (info.Status === "SUCCESS") {
-    redirectURL = `https://lightpickers.github.io/Frontend-Dev-React/#/checkout/status/${orderId}`;
-  }
-
+  // 轉跳前端顯示畫面
+  const redirectURL = `https://lightpickers.github.io/Frontend-Dev-React/#/checkout/status/${orderId}`;
   return res.redirect(redirectURL);
 }
+
 async function postNotify(req, res, next) {
   const resData = req.body;
   logger.info("藍新 Notify body: ", req.body);
@@ -75,14 +73,17 @@ async function postNotify(req, res, next) {
         order_id: order.id,
         user_id: order.user_id,
         transaction_id: result.TradeNo,
-        status: "付款成功",
+        status: "payment_success",
         paid_at: result.PayTime,
       });
       await paymentRepo.save(newPayment);
 
       // 更新 Order status 狀態
-      order.status = "已付款";
+      order.status = "paid";
       await orderRepo.save(order);
+
+      // 刪除 redis key，表示不需再取消
+      await redis.del(`order:pending:${orderId}`);
 
       // 取得訂單商品
       const orderItemsRepo = manager.getRepository("Order_items");

@@ -28,7 +28,7 @@ module.exports = new EntitySchema({
     },
     shipping_method: {
       type: "varchar",
-      length: 10,
+      length: 50,
       nullable: false,
     },
     payment_method: {
@@ -45,7 +45,7 @@ module.exports = new EntitySchema({
       length: 30,
       nullable: true,
     },
-    cancelled_at: {
+    canceled_at: {
       type: "timestamp",
       nullable: true,
     },

@@ -13,6 +13,7 @@ let hasLoggedError = false;
 redis.on("error", (err) => {
   if (!hasLoggedError) {
     logger.error("Redis Client Error，系統將不使用 Redis 快取", err);
+    isRedisConnected = false;
     hasLoggedError = true;
   }
 });
@@ -21,7 +22,7 @@ redis.on("error", (err) => {
 redis.on("ready", () => {
   isRedisConnected = true;
   hasLoggedError = false;
-  logger.info("Redis connected and ready!");
+  logger.info("Redis connected and ready! 使用 Redis 為主的排程策略");
 });
 
 // 初始化 Redis 連線
@@ -35,4 +36,7 @@ async function connectRedis() {
 
 connectRedis();
 
-module.exports = redis;
+module.exports = {
+  redis,
+  isRedisConnected: () => isRedisConnected,
+};
