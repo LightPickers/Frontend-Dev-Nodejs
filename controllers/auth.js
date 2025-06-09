@@ -52,6 +52,11 @@ async function getGoogleCallback(req, res, next) {
     where: { id: userId },
   });
 
+  if (!user) {
+    logger.warn(ERROR_MESSAGES.USER_NOT_FOUND);
+    return next(new AppError(404, ERROR_MESSAGES.USER_NOT_FOUND));
+  }
+
   // 使用撈取到的 user 資料 建立 token
   const token = await generateJWT(
     {
@@ -64,6 +69,11 @@ async function getGoogleCallback(req, res, next) {
     }
   );
 
+  const redirectURL = `https://lightpickers.github.io/Frontend-Dev-React/#/google-callback?token=${token}&name=${encodeURIComponent(
+    user.name
+  )}`;
+
+  return res.redirect(redirectURL);
   res.status(201).json({
     status: true,
     data: {
