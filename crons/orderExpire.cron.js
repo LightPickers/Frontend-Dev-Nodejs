@@ -1,3 +1,4 @@
+/*
 const cron = require("node-cron");
 const { dataSource } = require("../db/data-source");
 const { LessThan } = require("typeorm");
@@ -43,7 +44,8 @@ async function fallbackCancelExpiredOrders() {
   const orderRepo = dataSource.getRepository("Orders");
 
   // 取得 30 分鐘前的時間
-  const cutoffTime = new Date(Date.now() - 30 * 60 * 1000);
+  const now = new Date().toISOString();
+  const cutoffTime = new Date(Date.now() - 30 * 60 * 1000).toISOString();
 
   const expiredOrders = await orderRepo.find({
     where: {
@@ -54,19 +56,21 @@ async function fallbackCancelExpiredOrders() {
 
   for (const order of expiredOrders) {
     order.status = "canceled";
-    order.canceled_at = new Date().toISOString();
+    order.canceled_at = now;
     await orderRepo.save(order);
     logger.info(`[資料庫備援] 訂單 ${order.id} 超過 30 分鐘未付款，自動取消`);
   }
 }
 
-// 每分鐘執行一次
+// 每5分鐘執行一次
 cron.schedule("* * * * *", () => {
   try {
     if (isRedisConnected()) {
       cancelExpiredOrders();
+      logger.info(`Redis 美分`);
     } else {
       fallbackCancelExpiredOrders();
+      logger.info(`資料庫 美分`);
     }
   } catch (err) {
     logger.error("排程執行錯誤：", err);
@@ -74,7 +78,8 @@ cron.schedule("* * * * *", () => {
 });
 
 // 每小時執行一次
-cron.schedule("0 * * * *", () => {
+cron.schedule("0 * * * *", async () => {
   logger.info("[資料庫備援] 開始執行過期訂單補掃...");
-  fallbackCancelExpiredOrders().catch(console.error);
+  await fallbackCancelExpiredOrders().catch(console.error);
 });
+*/
