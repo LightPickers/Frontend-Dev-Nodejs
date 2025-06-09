@@ -1,7 +1,7 @@
 const { In } = require("typeorm");
 const { dataSource } = require("../db/data-source");
 const logger = require("../utils/logger")("NeWebPayController");
-const redis = require("../utils/redis");
+const { redis } = require("../utils/redis");
 const {
   create_mpg_sha_encrypt,
   create_mpg_aes_decrypt,
@@ -83,7 +83,7 @@ async function postNotify(req, res, next) {
       await orderRepo.save(order);
 
       // 刪除 redis key，表示不需再取消
-      await redis.del(`order:pending:${orderId}`);
+      await redis.del(`order:pending:${order.id}`);
 
       // 取得訂單商品
       const orderItemsRepo = manager.getRepository("Order_items");
@@ -112,6 +112,7 @@ async function postNotify(req, res, next) {
 
       for (const product of products) {
         product.is_available = false;
+        product.is_sold = true;
       }
 
       await productRepo.save(products);

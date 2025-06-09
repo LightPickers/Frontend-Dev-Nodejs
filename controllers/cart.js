@@ -1,5 +1,3 @@
-// const { IsNull, In } = require("typeorm");
-// const config = require("../config/index");
 const { dataSource } = require("../db/data-source");
 const { redis } = require("../utils/redis");
 const logger = require("../utils/logger")("CartController");
