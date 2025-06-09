@@ -45,7 +45,7 @@ server.listen(port, async () => {
     logger.info("資料庫連線成功");
     logger.info(`伺服器運作中. port: ${port}`);
     if (isRedisConnected()) {
-      await restorePendingOrdersToRedis(); // 補建遺失 redis key
+      //await restorePendingOrdersToRedis(); // 補建遺失 redis key
     }
   } catch (error) {
     logger.error(`資料庫連線失敗: ${error.message}`);
