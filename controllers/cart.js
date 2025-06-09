@@ -1,5 +1,3 @@
-// const { IsNull, In } = require("typeorm");
-// const config = require("../config/index");
 const { dataSource } = require("../db/data-source");
 const { redis } = require("../utils/redis");
 const logger = require("../utils/logger")("CartController");
@@ -223,6 +221,14 @@ async function postCartCheckout(req, res, next) {
     if (!coupon) {
       logger.warn(`優惠券${ERROR_MESSAGES.DATA_NOT_FOUND}`);
       return next(new AppError(400, `優惠券${ERROR_MESSAGES.DATA_NOT_FOUND}`));
+    }
+
+    // 判斷優惠券是否供應
+    if (!coupon.is_available) {
+      logger.warn(`優惠券${ERROR_MESSAGES.DATA_NOT_AVAILABLE}`);
+      return next(
+        new AppError(400, `優惠券${ERROR_MESSAGES.DATA_NOT_AVAILABLE}`)
+      );
     }
 
     // 判斷 現在 是否在 該優惠券使用範圍內（包含開始和結束日）

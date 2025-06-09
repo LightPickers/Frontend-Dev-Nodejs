@@ -34,6 +34,7 @@ const ERROR_MESSAGES = {
   PRODUCT_DELETED: "商品已刪除",
   DATA_ALREADY_USED: "資料已被使用",
   DATA_NOT_DELETE: "資料未刪除",
+  DATA_NOT_AVAILABLE: "資料未供應",
   REDIS_WRITE_FAILED: "Redis 寫入失敗",
   REDIS_FAILED_TO_PROCESS_CHECKOUT: "Redis暫時無法處理結帳資訊",
   ID_NOT_RULE: "ID 格式錯誤",
