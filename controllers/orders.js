@@ -122,6 +122,9 @@ async function postOrder(req, res, next) {
         id: newOrder.coupon_id,
       });
       usingCoupon.quantity -= 1;
+
+      // 將使用的優惠券 已使用數量 +1
+      usingCoupon.distributed_quantity += 1;
       await couponRepo.save(usingCoupon);
     }
 
