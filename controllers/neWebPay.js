@@ -1,7 +1,7 @@
 const { In } = require("typeorm");
 const { dataSource } = require("../db/data-source");
 const logger = require("../utils/logger")("NeWebPayController");
-const redis = require("../utils/redis");
+const { redis } = require("../utils/redis");
 const {
   create_mpg_sha_encrypt,
   create_mpg_aes_decrypt,
