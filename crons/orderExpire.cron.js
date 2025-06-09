@@ -48,7 +48,7 @@ async function fallbackCancelExpiredOrders() {
   const expiredOrders = await orderRepo.find({
     where: {
       status: "pending",
-      created_at: LessThan(cutoffTime), // 當訂單建立時間 早於(小於) 30 分鐘前的時間
+      created_at: LessThan(cutoffTime.toISOString()), // 當訂單建立時間 早於(小於) 30 分鐘前的時間
     },
   });
 
