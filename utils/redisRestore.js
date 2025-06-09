@@ -8,7 +8,7 @@ async function restorePendingOrdersToRedis() {
   const orderRepo = dataSource.getRepository("Orders");
 
   // 找出尚未過期的 pending 訂單（建立時間 < 30 分鐘內）
-  const threshold = new Date(Date.now() - 30 * 60 * 1000);
+  const threshold = new Date(Date.now() - 30 * 60 * 1000).toISOString();
 
   const orders = await orderRepo.find({
     where: {
