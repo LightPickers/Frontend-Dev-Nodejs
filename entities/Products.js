@@ -43,12 +43,12 @@ module.exports = new EntitySchema({
     },
     description: {
       type: "jsonb",
-      nullable: false,
+      nullable: true,
     },
     summary: {
       type: "text",
       array: true,
-      nullable: false,
+      nullable: true,
     },
     primary_image: {
       type: "varchar",
@@ -73,11 +73,11 @@ module.exports = new EntitySchema({
     },
     is_sold: {
       type: "boolean",
-      nullable: false,
+      nullable: true,
     },
     is_deleted: {
       type: "boolean",
-      nullable: false,
+      nullable: true,
     },
     created_at: {
       type: "timestamp",
