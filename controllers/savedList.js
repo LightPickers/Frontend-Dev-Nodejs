@@ -141,7 +141,6 @@ async function getSavedList(req, res, next) {
     orderBy = "DESC";
   }
 
-  /*
   const savedList = await favoritesRepo.find({
     where: { Users: { id: user_id } },
     relations: ["Products"],
@@ -162,8 +161,8 @@ async function getSavedList(req, res, next) {
     },
     order: { [sortBy]: orderBy },
   });
-  */
 
+  /*
   const savedList = await favoritesRepo
     .createQueryBuilder("favorites")
     .leftJoinAndSelect("favorites.Products", "product")
@@ -185,7 +184,8 @@ async function getSavedList(req, res, next) {
     .where("favorites.Users = :user_id", { user_id })
     .orderBy(`favorites.${sortBy}`, orderBy)
     .getRawMany();
-  console.log(savedList);
+  // console.log(savedList);
+  */
   const totalPrice = savedList.reduce(
     (sum, item) => sum + item.product_selling_price,
     0
