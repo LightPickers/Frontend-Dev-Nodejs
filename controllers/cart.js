@@ -225,6 +225,14 @@ async function postCartCheckout(req, res, next) {
       return next(new AppError(400, `優惠券${ERROR_MESSAGES.DATA_NOT_FOUND}`));
     }
 
+    // 判斷優惠券是否供應
+    if (!coupon.is_available) {
+      logger.warn(`優惠券${ERROR_MESSAGES.DATA_NOT_AVAILABLE}`);
+      return next(
+        new AppError(400, `優惠券${ERROR_MESSAGES.DATA_NOT_AVAILABLE}`)
+      );
+    }
+
     // 判斷 現在 是否在 該優惠券使用範圍內（包含開始和結束日）
     const now = Date.now();
     const startAt = new Date(coupon.start_at).getTime();
