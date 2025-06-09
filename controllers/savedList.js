@@ -124,6 +124,7 @@ async function removeFromSavedList(req, res, next) {
 async function getSavedList(req, res, next) {
   const user_id = req.user.id;
   const favoritesRepo = dataSource.getRepository("Favorites");
+  const cartRepo = dataSource.getRepository("Cart");
   const validSortFields = ["created_at", "updated_at", "price"]; // 限定排序欄位
   const validOrders = ["ASC", "DESC"]; // 排序方式限定升冪降冪兩種
   let { sortBy = "created_at", orderBy = "DESC" } = req.query;
@@ -141,12 +142,12 @@ async function getSavedList(req, res, next) {
     orderBy = "DESC";
   }
 
-  /*
   const savedList = await favoritesRepo.find({
     where: { Users: { id: user_id } },
     relations: ["Products"],
     select: {
       id: true,
+      created_at: true,
       Products: {
         id: true,
         name: true,
@@ -158,12 +159,26 @@ async function getSavedList(req, res, next) {
         is_deleted: true,
         updated_at: true,
       },
-      created_at: true,
     },
     order: { [sortBy]: orderBy },
   });
-  */
 
+  // Fetch cart items for the user (only product IDs)
+  const cartItems = await cartRepo.find({
+    where: { user_id: user_id },
+    select: { product_id: true },
+  });
+
+  // Convert cart product IDs into a Set for quick lookup
+  const cartProductIds = new Set(cartItems.map((item) => item.product_id));
+
+  // Modify savedList to include is_in_cart information
+  const updatedSavedList = savedList.map((item) => ({
+    ...item,
+    is_in_cart: cartProductIds.has(item.Products.id),
+  }));
+
+  /*
   const savedList = await favoritesRepo
     .createQueryBuilder("favorites")
     .leftJoinAndSelect("favorites.Products", "product")
@@ -185,9 +200,11 @@ async function getSavedList(req, res, next) {
     .where("favorites.Users = :user_id", { user_id })
     .orderBy(`favorites.${sortBy}`, orderBy)
     .getRawMany();
-  console.log(savedList);
+  // console.log(savedList);
+  */
+
   const totalPrice = savedList.reduce(
-    (sum, item) => sum + item.product_selling_price,
+    (sum, item) => sum + item.Products.selling_price,
     0
   ); //計算收藏清單中的商品價格總額
 
@@ -195,7 +212,7 @@ async function getSavedList(req, res, next) {
     status: "true",
     message: "成功",
     totalSellingPrice: totalPrice,
-    data: savedList,
+    data: updatedSavedList,
   });
 }
 
