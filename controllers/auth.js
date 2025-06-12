@@ -4,6 +4,7 @@ const logger = require("../utils/logger")("authController");
 const generateJWT = require("../utils/generateJWT");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
+const isProfileCompleted = require("../utils/isProfileCompleted");
 
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
@@ -47,11 +48,9 @@ passport.use(
 async function getGoogleCallback(req, res, next) {
   const { id: userId } = req.user;
   const userRepo = dataSource.getRepository("Users");
-  const user = await userRepo.findOne({
-    select: ["id", "role_id", "name"],
-    where: { id: userId },
-  });
+  const user = await userRepo.findOneBy({ id: userId });
 
+  // 使用者不存在 回傳錯誤
   if (!user) {
     logger.warn(ERROR_MESSAGES.USER_NOT_FOUND);
     return next(new AppError(404, ERROR_MESSAGES.USER_NOT_FOUND));
@@ -69,18 +68,14 @@ async function getGoogleCallback(req, res, next) {
     }
   );
 
+  // 判斷 使用者資料 是否完整
+  const profileStatus = isProfileCompleted(user);
+
   const redirectURL = `https://lightpickers.github.io/Frontend-Dev-React/#/google-callback?token=${token}&name=${encodeURIComponent(
     user.name
-  )}`;
+  )}&isProfileCompleted=${profileStatus}`;
 
   return res.redirect(redirectURL);
-  res.status(201).json({
-    status: true,
-    data: {
-      token,
-      name: user.name,
-    },
-  });
 }
 
 module.exports = {
