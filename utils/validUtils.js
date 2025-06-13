@@ -91,7 +91,7 @@ async function checkIfProductSaved(repo, userId, productId) {
 
 // 檢查商品是否存在
 async function checkExisted(productsRepo, product_id) {
-  return await productsRepo.findOne({
+  return await productsRepo.exist({
     where: { id: product_id },
   });
 }
@@ -201,7 +201,7 @@ async function checkProductStatus(productsRepo, product_id, inventory) {
 
 // 檢查訂單是否存在
 async function checkOrder(ordersRepo, order_id) {
-  return await ordersRepo.findOne({
+  return await ordersRepo.exist({
     where: { id: order_id },
   });
 }
