@@ -66,8 +66,21 @@ function isValidStringArray(arr) {
 }
 
 // 檢查商品是否已收藏/加入購物車
+/*
 async function checkIfProductSaved(targetRepo, userId, productId) {
   return await targetRepo.findOne({
+    where: {
+      Users: { id: userId },
+      Products: { id: productId },
+    },
+    relations: ["Users", "Products"],
+  });
+}
+  */
+// utils/checkIfProductSaved.js（或 utils 資料夾中）
+
+async function checkIfProductSaved(repo, userId, productId) {
+  return await repo.exist({
     where: {
       Users: { id: userId },
       Products: { id: productId },
