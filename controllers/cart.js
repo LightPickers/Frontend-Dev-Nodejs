@@ -64,14 +64,15 @@ async function addCart(req, res, next) {
     return next(new AppError(409, ERROR_MESSAGES.DUPLICATE_ADD_TO_CART));
   }
 
-  const productPrice = await productsRepo.findOne({
-    select: ["selling_price"],
-    where: { id: product_id },
-  });
+  // const productPrice = await productsRepo.findOne({
+  //   select: ["selling_price"],
+  //   where: { id: product_id },
+  // });
+
   const addCart = await cartRepo.create({
     Users: { id: user_id },
     Products: { id: product_id },
-    price_at_time: productPrice.selling_price,
+    price_at_time: productStatus.selling_price,
     quantity: 1,
   });
   await cartRepo.save(addCart);
