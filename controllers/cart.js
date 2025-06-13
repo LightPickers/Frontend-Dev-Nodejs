@@ -101,8 +101,9 @@ async function getCart(req, res, next) {
       "Products.is_sold",
       "Products.is_deleted",
     ])
+    .orderBy("cart.created_at", "DESC")
     .getMany();
-
+  /*
   const items = cart.map(({ id, Products, price_at_time, quantity }) => {
     const {
       id: product_id,
@@ -121,6 +122,22 @@ async function getCart(req, res, next) {
       is_available: Products?.is_available,
       is_sold: Products?.is_sold,
       is_deleted: Products?.is_deleted,
+    };
+  });
+*/
+
+  const items = cart.map(({ id, Products, price_at_time, quantity }) => {
+    return {
+      id,
+      product_id: Products.id,
+      name: Products.name,
+      primary_image: Products.primary_image || "",
+      price_at_time,
+      quantity,
+      total_price: price_at_time * quantity,
+      is_available: Products.is_available,
+      is_sold: Products.is_sold,
+      is_deleted: Products.is_deleted,
     };
   });
 
