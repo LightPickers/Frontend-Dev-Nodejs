@@ -123,11 +123,12 @@ async function removeFromSavedList(req, res, next) {
 
 async function getSavedList(req, res, next) {
   const user_id = req.user.id;
-  const favoritesRepo = dataSource.getRepository("Favorites");
-  const cartRepo = dataSource.getRepository("Cart");
   const validSortFields = ["created_at", "updated_at", "price"]; // 限定排序欄位
   const validOrders = ["ASC", "DESC"]; // 排序方式限定升冪降冪兩種
   let { sortBy = "created_at", orderBy = "DESC" } = req.query;
+
+  // const favoritesRepo = dataSource.getRepository("Favorites");
+  // const cartRepo = dataSource.getRepository("Cart");
 
   // 檢查排序欄位是否合法
   if (!validSortFields.includes(sortBy)) {
@@ -142,6 +143,62 @@ async function getSavedList(req, res, next) {
     orderBy = "DESC";
   }
 
+  // 轉換 sortBy => 對應的資料表欄位
+  const sortFieldMap = {
+    created_at: "favorites.created_at",
+    updated_at: "Products.updated_at",
+    price: "Products.selling_price",
+  };
+  const sortField = sortFieldMap[sortBy] || "favorites.created_at";
+
+  const favorites = await dataSource
+    .getRepository("Favorites")
+    .createQueryBuilder("fav")
+    .leftJoin("fav.Products", "product")
+    .leftJoin(
+      "Cart",
+      "cart",
+      "cart.product_id = product.id AND cart.user_id = :user_id",
+      { user_id }
+    )
+    .select([
+      "fav.id AS id",
+      "fav.created_at AS created_at",
+      "product.id AS product_id",
+      "product.name AS name",
+      "product.selling_price AS selling_price",
+      "product.original_price AS original_price",
+      "product.primary_image AS primary_image",
+      "product.is_available AS is_available",
+      "product.is_sold AS is_sold",
+      "product.is_deleted AS is_deleted",
+      "product.updated_at AS updated_at",
+      "cart.product_id AS in_cart_id",
+    ])
+    .where("fav.user_id = :user_id", { user_id })
+    .orderBy(sortField, orderBy)
+    .addOrderBy("fav.id", "DESC") // 保證穩定排序
+    .getRawMany();
+
+  const formatted = favorites.map((row) => ({
+    id: row.id,
+    created_at: row.created_at,
+    Products: {
+      id: row.product_id,
+      name: row.name,
+      selling_price: row.selling_price,
+      original_price: row.original_price,
+      primary_image: row.primary_image,
+      is_available: row.is_available,
+      is_sold: row.is_sold,
+      is_deleted: row.is_deleted,
+      updated_at: row.updated_at,
+    },
+    is_in_cart: row.in_cart_id !== null,
+  }));
+
+  // 查詢方式：find() 搭配 relations + select + order
+  /*
   const savedList = await favoritesRepo.find({
     where: { Users: { id: user_id } },
     relations: ["Products"],
@@ -177,6 +234,7 @@ async function getSavedList(req, res, next) {
     ...item,
     is_in_cart: cartProductIds.has(item.Products.id),
   }));
+  */
 
   /*
   const savedList = await favoritesRepo
@@ -203,16 +261,27 @@ async function getSavedList(req, res, next) {
   // console.log(savedList);
   */
 
-  const totalPrice = savedList.reduce(
+  const totalPrice = formatted.reduce(
     (sum, item) => sum + item.Products.selling_price,
     0
   ); //計算收藏清單中的商品價格總額
+
+  // 只計算可以購買的商品的價格總額
+  /*
+  const totalPrice = savedList.reduce((sum, item) => {
+  const p = item.Products;
+  if (p.is_available && !p.is_deleted && !p.is_sold) {
+    return sum + p.selling_price;
+  }
+  return sum;
+  }, 0);
+  */
 
   res.status(200).json({
     status: "true",
     message: "成功",
     totalSellingPrice: totalPrice,
-    data: updatedSavedList,
+    data: formatted,
   });
 }
 
