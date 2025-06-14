@@ -2,7 +2,6 @@ const { isUUID } = require("validator");
 const { dataSource } = require("../db/data-source");
 // const { titleCase } = require("typeorm/util/StringUtils.js");
 // const Conditions = require("../entities/Conditions");
-
 const logger = require("../utils/logger")("UsersController");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
@@ -15,6 +14,7 @@ const {
 // const { ServerDescription } = require("typeorm");
 // const Categories = require("../entities/Categories");
 // const Brands = require("../entities/Brands");
+const { getValidIds } = require("../utils/validFilterCache");
 
 // API 54
 async function getProducts(req, res, next) {
@@ -29,7 +29,6 @@ async function getProducts(req, res, next) {
   } = req.query;
 
   const errors = {};
-
   const pageInt = parseInt(page, 10);
   const pageSizeInt = parseInt(page_size, 10);
   const offset = (pageInt - 1) * pageSizeInt;
@@ -45,6 +44,7 @@ async function getProducts(req, res, next) {
     errors.offset = ERROR_MESSAGES.DATA_NEGATIVE;
   }
 
+  const { category_ids, brand_ids, condition_ids } = await getValidIds();
   const query = dataSource
     .getRepository("Products")
     .createQueryBuilder("product")
@@ -56,24 +56,38 @@ async function getProducts(req, res, next) {
     if (!isValidId(category_id)) {
       logger.warn(`category_id錯誤: ${ERROR_MESSAGES.ID_NOT_RULE}`);
       errors.category_id = ERROR_MESSAGES.ID_NOT_RULE;
+    } else if (!category_ids.includes(category_id)) {
+      logger.warn(`category_id錯誤: ${ERROR_MESSAGES.ID_NOT_FOUND}`);
+      errors.category_id = ERROR_MESSAGES.ID_NOT_FOUND;
     } else {
-      const categoryRepo = dataSource.getRepository("Categories");
-      const existId = await categoryRepo.findOneBy({ id: category_id });
-
-      if (!existId) {
-        logger.warn(`category_id錯誤: ${ERROR_MESSAGES.DATA_NOT_FOUND}`);
-        errors.category_id = ERROR_MESSAGES.ID_NOT_FOUND;
-      } else {
-        query.andWhere("product.category_id = :category_id", { category_id });
-      }
+      query.andWhere("product.category_id = :category_id", { category_id });
     }
+    /*
+    else {
+      // const categoryRepo = dataSource.getRepository("Categories");
+      // const existId = await categoryRepo.findOneBy({ id: category_id });
+      // if (!existId) {
+      //   logger.warn(`category_id錯誤: ${ERROR_MESSAGES.DATA_NOT_FOUND}`);
+      //   errors.category_id = ERROR_MESSAGES.ID_NOT_FOUND;
+      // } else {
+      //   query.andWhere("product.category_id = :category_id", { category_id });
+      // }    
+    }
+    */
   }
 
   if (brand_id) {
     if (!isValidId(brand_id)) {
       logger.warn(`brand_id錯誤: ${ERROR_MESSAGES.ID_NOT_RULE}`);
       errors.brand_id = ERROR_MESSAGES.ID_NOT_RULE;
+    } else if (!brand_ids.includes(brand_id)) {
+      logger.warn(`brand_id錯誤: ${ERROR_MESSAGES.ID_NOT_FOUND}`);
+      errors.brand_id = ERROR_MESSAGES.ID_NOT_FOUND;
     } else {
+      query.andWhere("product.brand_id = :brand_id", { brand_id });
+    }
+    /*
+    else {
       const brandRepo = dataSource.getRepository("Brands");
       const existId = await brandRepo.findOneBy({ id: brand_id });
 
@@ -84,13 +98,21 @@ async function getProducts(req, res, next) {
         query.andWhere("product.brand_id = :brand_id", { brand_id });
       }
     }
+    */
   }
 
   if (condition_id) {
     if (!isValidId(condition_id)) {
       logger.warn(`condition_id錯誤: ${ERROR_MESSAGES.ID_NOT_RULE}`);
       errors.condition_id = ERROR_MESSAGES.ID_NOT_RULE;
+    } else if (!condition_ids.includes(condition_id)) {
+      logger.warn(`condition_id錯誤: ${ERROR_MESSAGES.ID_NOT_FOUND}`);
+      errors.condition_id = ERROR_MESSAGES.ID_NOT_FOUND;
     } else {
+      query.andWhere("product.condition_id = :condition_id", { condition_id });
+    }
+    /*
+    else {
       const conditionRepo = dataSource.getRepository("Conditions");
       const existId = await conditionRepo.findOneBy({ id: condition_id });
 
@@ -103,6 +125,7 @@ async function getProducts(req, res, next) {
         });
       }
     }
+    */
   }
 
   if (keyword) {
@@ -165,6 +188,7 @@ async function getProducts(req, res, next) {
       { is_deleted: false, is_available: true }
     )
     .orderBy("product.created_at", "DESC")
+    .addOrderBy("product.id", "DESC") // 避免時間相同排序混亂
     .skip(offset)
     .take(pageSizeInt)
     .getManyAndCount();
