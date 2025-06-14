@@ -19,6 +19,7 @@ async function getCondition(req, res, next) {
   res.status(200).json({
     message: "成功",
     status: true,
+    ...(cacheHit ? { cache: true } : {}),
     data: ConditionsInfo,
   });
 }

@@ -259,11 +259,13 @@ async function getFeaturedProducts(req, res, next) {
           condition: product.Conditions.name,
           primary_image: product.primary_image,
         }));
-      }
+      },
+      3600 // 快取 1 小時
     );
 
     res.status(200).json({
       status: true,
+      ...(cacheHit ? { cache: true } : {}),
       message:
         featuredProductsResult.length === 0 ? "找不到精選商品" : undefined,
       data: featuredProductsResult,
@@ -288,34 +290,39 @@ async function getLatestProducts(req, res, next) {
 
   const cacheKey = `homepage:latest_products:limit_${limit}`;
   try {
-    const result = await cacheOrFetch(cacheKey, async () => {
-      const latestProducts = await dataSource.getRepository("Products").find({
-        where: {
-          is_sold: false,
-          is_deleted: false,
-          is_available: true,
-        },
-        relations: {
-          Conditions: true,
-        },
-        order: {
-          created_at: "DESC",
-        },
-        take: limit,
-      });
+    const result = await cacheOrFetch(
+      cacheKey,
+      async () => {
+        const latestProducts = await dataSource.getRepository("Products").find({
+          where: {
+            is_sold: false,
+            is_deleted: false,
+            is_available: true,
+          },
+          relations: {
+            Conditions: true,
+          },
+          order: {
+            created_at: "DESC",
+          },
+          take: limit,
+        });
 
-      return latestProducts.map((product) => ({
-        id: product.id,
-        name: product.name,
-        condition: product.Conditions?.name || null,
-        original_price: product.original_price,
-        selling_price: product.selling_price,
-        primary_image: product.primary_image,
-      }));
-    });
+        return latestProducts.map((product) => ({
+          id: product.id,
+          name: product.name,
+          condition: product.Conditions?.name || null,
+          original_price: product.original_price,
+          selling_price: product.selling_price,
+          primary_image: product.primary_image,
+        }));
+      },
+      3600 // 快取 1 小時
+    );
 
     res.status(200).json({
       status: "true",
+      ...(cacheHit ? { cache: true } : {}),
       data: result,
     });
   } catch (err) {

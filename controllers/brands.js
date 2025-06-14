@@ -45,6 +45,7 @@ async function getBrand(req, res, next) {
     res.status(200).json({
       message: "成功",
       status: true,
+      ...(cacheHit ? { cache: true } : {}),
       data: BrandsInfo,
     });
   } catch (err) {
