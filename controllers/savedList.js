@@ -145,11 +145,11 @@ async function getSavedList(req, res, next) {
 
   // 轉換 sortBy => 對應的資料表欄位
   const sortFieldMap = {
-    created_at: "favorites.created_at",
-    updated_at: "Products.updated_at",
-    price: "Products.selling_price",
+    created_at: "fav.created_at",
+    updated_at: "product.updated_at",
+    price: "product.selling_price",
   };
-  const sortField = sortFieldMap[sortBy] || "favorites.created_at";
+  const sortField = sortFieldMap[sortBy] || "fav.created_at";
 
   const favorites = await dataSource
     .getRepository("Favorites")

@@ -72,7 +72,7 @@ async function addCart(req, res, next) {
   const addCart = await cartRepo.create({
     Users: { id: user_id },
     Products: { id: product_id },
-    price_at_time: productStatus.selling_price,
+    price_at_time: productStatus.product.selling_price,
     quantity: 1,
   });
   await cartRepo.save(addCart);
