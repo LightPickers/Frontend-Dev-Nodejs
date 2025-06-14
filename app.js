@@ -48,7 +48,7 @@ app.use("/api/v1/conditions", conditionsRouter);
 app.use("/api/v1/brands", brandsRouter);
 app.use("/api/v1/category", categoryRouter);
 app.use("/api/v1/upload/image", uploadRouter);
-app.use("/health", healthRouter);
+app.use("/api/v1/health", healthRouter);
 
 //404
 app.use((req, res, next) => {
