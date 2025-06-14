@@ -223,8 +223,8 @@ async function getProducts(req, res, next) {
 // API 15
 async function getFeaturedProducts(req, res, next) {
   try {
-    const featuredProductsResult = await cacheOrFetch(
-      "homepage:featured_productss", // Redis key
+    const data = await cacheOrFetch(
+      "homepage:featured_products", // Redis key
       async () => {
         const featuredProducts = await dataSource
           .getRepository("Products")
@@ -250,7 +250,7 @@ async function getFeaturedProducts(req, res, next) {
             },
           });
 
-        return featuredProducts.map((product) => ({
+        const featuredProductsResult = featuredProducts.map((product) => ({
           id: product.id,
           name: product.name,
           original_price: product.original_price,
@@ -259,18 +259,20 @@ async function getFeaturedProducts(req, res, next) {
           condition: product.Conditions.name,
           primary_image: product.primary_image,
         }));
+
+        return featuredProductsResult;
       },
       3600 // 快取 1 小時
     );
 
     res.status(200).json({
       status: true,
-      ...(cacheHit ? { cache: true } : {}),
-      message:
-        featuredProductsResult.length === 0 ? "找不到精選商品" : undefined,
-      data: featuredProductsResult,
+      // ...(cacheHit ? { cache: true } : {}),
+      message: data.length === 0 ? "找不到精選商品" : undefined,
+      data: data,
     });
   } catch (err) {
+    // console.error("詳細錯誤：", err);
     logger.error("取得精選商品時發生錯誤", err);
     next(new AppError(500, "取得精選商品時發生錯誤"));
   }
@@ -290,7 +292,7 @@ async function getLatestProducts(req, res, next) {
 
   const cacheKey = `homepage:latest_products:limit_${limit}`;
   try {
-    const result = await cacheOrFetch(
+    const data = await cacheOrFetch(
       cacheKey,
       async () => {
         const latestProducts = await dataSource.getRepository("Products").find({
@@ -322,8 +324,8 @@ async function getLatestProducts(req, res, next) {
 
     res.status(200).json({
       status: "true",
-      ...(cacheHit ? { cache: true } : {}),
-      data: result,
+      // ...(cacheHit ? { cache: true } : {}),
+      data: data,
     });
   } catch (err) {
     logger.error("取得最新商品失敗", err);

@@ -50,7 +50,7 @@ async function getFeaturedCategory(req, res, next) {
     res.status(200).json({
       message: "成功",
       status: true,
-      ...(cacheHit ? { cache: true } : {}),
+      // ...(cacheHit ? { cache: true } : {}),
       data: FeaturedCategoriesInfo,
     });
   } catch (err) {
