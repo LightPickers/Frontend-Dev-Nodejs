@@ -12,5 +12,6 @@ router.post(
   upload,
   handleErrorAsync(uploadController.postUploadImage)
 );
+router.delete("/images", handleErrorAsync(uploadController.deleteImages));
 
 module.exports = router;
