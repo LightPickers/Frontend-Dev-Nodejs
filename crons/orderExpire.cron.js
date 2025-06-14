@@ -1,4 +1,3 @@
-/*
 const cron = require("node-cron");
 const { dataSource } = require("../db/data-source");
 const { LessThan } = require("typeorm");
@@ -7,6 +6,7 @@ const logger = require("../utils/logger")("OrderExpire.cron");
 
 async function cancelExpiredOrders() {
   const orderRepo = dataSource.getRepository("Orders");
+  const nowDbTime = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString();
 
   let cursor = "0";
   do {
@@ -31,7 +31,7 @@ async function cancelExpiredOrders() {
         const order = await orderRepo.findOneBy({ id: orderId });
         if (order && order.status === "pending") {
           order.status = "canceled";
-          order.canceled_at = new Date().toISOString();
+          order.canceled_at = nowDbTime;
           await orderRepo.save(order);
           logger.info(`訂單 ${orderId} 超時未付款，已自動取消`);
         }
@@ -44,8 +44,10 @@ async function fallbackCancelExpiredOrders() {
   const orderRepo = dataSource.getRepository("Orders");
 
   // 取得 30 分鐘前的時間
-  const now = new Date().toISOString();
-  const cutoffTime = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const nowDbTime = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString();
+  const cutoffTime = new Date(
+    new Date(nowDbTime) - 30 * 60 * 1000
+  ).toISOString(); // 30 分鐘前
 
   const expiredOrders = await orderRepo.find({
     where: {
@@ -56,24 +58,24 @@ async function fallbackCancelExpiredOrders() {
 
   for (const order of expiredOrders) {
     order.status = "canceled";
-    order.canceled_at = now;
+    order.canceled_at = nowDbTime;
     await orderRepo.save(order);
     logger.info(`[資料庫備援] 訂單 ${order.id} 超過 30 分鐘未付款，自動取消`);
   }
 }
 
-// 每5分鐘執行一次
-cron.schedule("* * * * *", () => {
+// 每 10 分鐘執行一次
+cron.schedule("*/10 * * * *", async () => {
   try {
     if (isRedisConnected()) {
-      cancelExpiredOrders();
-      logger.info(`Redis 美分`);
+      logger.info("每 10 分鐘使用 Redis 排程 檢查是否有過期訂單");
+      await cancelExpiredOrders();
     } else {
-      fallbackCancelExpiredOrders();
-      logger.info(`資料庫 美分`);
+      logger.info("[資料庫備援] 每 10 分鐘檢查是否有過期訂單");
+      await fallbackCancelExpiredOrders();
     }
   } catch (err) {
-    logger.error("排程執行錯誤：", err);
+    logger.error("排程執行錯誤", err);
   }
 });
 
@@ -82,4 +84,3 @@ cron.schedule("0 * * * *", async () => {
   logger.info("[資料庫備援] 開始執行過期訂單補掃...");
   await fallbackCancelExpiredOrders().catch(console.error);
 });
-*/

@@ -1,13 +1,13 @@
 const PUTPASSWORD_RULE = {
   password: "string",
   newPassword: "string",
-  comfirmNewPassword: "string",
+  confirmNewPassword: "string",
 };
 
 const RESETPASSWORD_RULE = {
   token: "string",
   newPassword: "string",
-  comfirmNewPassword: "string",
+  confirmNewPassword: "string",
 };
 
 const CARTCHECKOUT_RULES = {

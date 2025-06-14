@@ -206,6 +206,7 @@ async function updateUserProfile(req, res, next) {
     gender,
     birth_date,
     phone,
+    address_city,
     address_zipcode,
     address_district,
     address_detail,
@@ -269,6 +270,7 @@ async function updateUserProfile(req, res, next) {
       "gender",
       "birth_date",
       "phone",
+      "address_city",
       "address_zipcode",
       "address_district",
       "address_detail",
@@ -287,6 +289,7 @@ async function updateUserProfile(req, res, next) {
     gender,
     birth_date,
     phone,
+    address_city,
     address_zipcode,
     address_district,
     address_detail,
@@ -324,6 +327,7 @@ async function updateUserProfile(req, res, next) {
       gender,
       birth_date,
       phone,
+      address_city,
       address_zipcode,
       address_district,
       address_detail,
@@ -338,10 +342,10 @@ async function updateUserProfile(req, res, next) {
   const result = await userRepo.findOne({
     select: [
       "name",
-      "email",
       "phone",
       "gender",
       "birth_date",
+      "address_city",
       "address_zipcode",
       "address_district",
       "address_detail",
@@ -361,7 +365,7 @@ async function putPassword(req, res, next) {
   const {
     password,
     new_password: newPassword,
-    comfirm_new_password: comfirmNewPassword,
+    confirm_new_password: confirmNewPassword,
   } = req.body;
 
   // 驗證欄位
@@ -369,7 +373,7 @@ async function putPassword(req, res, next) {
     {
       password,
       newPassword,
-      comfirmNewPassword,
+      confirmNewPassword,
     },
     PUTPASSWORD_RULE
   );
@@ -383,7 +387,7 @@ async function putPassword(req, res, next) {
   const errorPasswords = validatePasswordRule({
     password,
     newPassword,
-    comfirmNewPassword,
+    confirmNewPassword,
   });
   if (errorPasswords) {
     const errorMessages = errorPasswords.join(", ");
@@ -414,7 +418,7 @@ async function putPassword(req, res, next) {
   }
 
   // 新密碼是否與確認新密碼相同
-  if (newPassword !== comfirmNewPassword) {
+  if (newPassword !== confirmNewPassword) {
     logger.warn(
       `建立使用者錯誤: ${ERROR_MESSAGES.PASSWORD_NEW_AND_VERIFIEDNEW_NOT_SAME}`
     );
@@ -448,7 +452,7 @@ async function putResetPassword(req, res, next) {
   const { token } = req.query;
   const {
     new_password: newPassword,
-    comfirm_new_password: comfirmNewPassword,
+    confirm_new_password: confirmNewPassword,
   } = req.body;
 
   // 驗證欄位
@@ -456,7 +460,7 @@ async function putResetPassword(req, res, next) {
     {
       token,
       newPassword,
-      comfirmNewPassword,
+      confirmNewPassword,
     },
     RESETPASSWORD_RULE
   );
@@ -469,7 +473,7 @@ async function putResetPassword(req, res, next) {
   // 驗證密碼規則
   const errorPasswords = validatePasswordRule({
     newPassword,
-    comfirmNewPassword,
+    confirmNewPassword,
   });
   if (errorPasswords) {
     const errorMessages = errorPasswords.join(", ");
@@ -490,7 +494,7 @@ async function putResetPassword(req, res, next) {
   }
 
   // 新密碼是否與確認新密碼相同
-  if (newPassword !== comfirmNewPassword) {
+  if (newPassword !== confirmNewPassword) {
     logger.warn(
       `建立使用者錯誤: ${ERROR_MESSAGES.PASSWORD_NEW_AND_VERIFIEDNEW_NOT_SAME}`
     );
