@@ -15,6 +15,7 @@ const {
 // const Categories = require("../entities/Categories");
 // const Brands = require("../entities/Brands");
 const { getValidIds } = require("../utils/validFilterCache");
+const { cacheOrFetch } = require("../utils/cache"); // 加入快取工具
 
 // API 54
 async function getProducts(req, res, next) {
@@ -221,43 +222,56 @@ async function getProducts(req, res, next) {
 
 // API 15
 async function getFeaturedProducts(req, res, next) {
-  const featuredProducts = await dataSource.getRepository("Products").find({
-    select: {
-      id: true,
-      name: true,
-      original_price: true,
-      selling_price: true,
-      Brands: { name: true },
-      Conditions: { name: true },
-      primary_image: true,
-    },
-    relations: {
-      Brands: true,
-      Conditions: true,
-    },
-    where: {
-      is_featured: true,
-      is_sold: false,
-      is_deleted: false,
-      is_available: true,
-    },
-  });
+  try {
+    const featuredProductsResult = await cacheOrFetch(
+      "homepage:featured_productss", // Redis key
+      async () => {
+        const featuredProducts = await dataSource
+          .getRepository("Products")
+          .find({
+            select: {
+              id: true,
+              name: true,
+              original_price: true,
+              selling_price: true,
+              Brands: { name: true },
+              Conditions: { name: true },
+              primary_image: true,
+            },
+            relations: {
+              Brands: true,
+              Conditions: true,
+            },
+            where: {
+              is_featured: true,
+              is_sold: false,
+              is_deleted: false,
+              is_available: true,
+            },
+          });
 
-  const result = featuredProducts.map((product) => ({
-    id: product.id,
-    name: product.name,
-    original_price: product.original_price,
-    selling_price: product.selling_price,
-    brand: product.Brands.name,
-    condition: product.Conditions.name,
-    primary_image: product.primary_image,
-  }));
+        return featuredProducts.map((product) => ({
+          id: product.id,
+          name: product.name,
+          original_price: product.original_price,
+          selling_price: product.selling_price,
+          brand: product.Brands.name,
+          condition: product.Conditions.name,
+          primary_image: product.primary_image,
+        }));
+      }
+    );
 
-  res.status(200).json({
-    status: true,
-    message: result.length === 0 ? "找不到精選商品" : undefined,
-    data: result,
-  });
+    res.status(200).json({
+      status: true,
+      message:
+        featuredProductsResult.length === 0 ? "找不到精選商品" : undefined,
+      data: featuredProductsResult,
+    });
+  } catch (err) {
+    logger.error("取得精選商品時發生錯誤", err);
+    next(new AppError(500, "取得精選商品時發生錯誤"));
+  }
 }
 
 // API 16
