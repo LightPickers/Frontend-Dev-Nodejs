@@ -66,8 +66,21 @@ function isValidStringArray(arr) {
 }
 
 // 檢查商品是否已收藏/加入購物車
+/*
 async function checkIfProductSaved(targetRepo, userId, productId) {
   return await targetRepo.findOne({
+    where: {
+      Users: { id: userId },
+      Products: { id: productId },
+    },
+    relations: ["Users", "Products"],
+  });
+}
+  */
+// utils/checkIfProductSaved.js（或 utils 資料夾中）
+
+async function checkIfProductSaved(repo, userId, productId) {
+  return await repo.exist({
     where: {
       Users: { id: userId },
       Products: { id: productId },
@@ -78,7 +91,7 @@ async function checkIfProductSaved(targetRepo, userId, productId) {
 
 // 檢查商品是否存在
 async function checkExisted(productsRepo, product_id) {
-  return await productsRepo.findOne({
+  return await productsRepo.exist({
     where: { id: product_id },
   });
 }
@@ -114,6 +127,7 @@ async function checkDeleted(productsRepo, product_id) {
 }
 
 // 綜合檢查商品是否: 存在、刪除、上架、庫存(若inventory為true)
+/*
 async function checkProductStatus(productsRepo, product_id, inventory) {
   const product = await productsRepo
     .createQueryBuilder("product")
@@ -148,10 +162,46 @@ async function checkProductStatus(productsRepo, product_id, inventory) {
 
   return { success: true };
 }
+*/
+
+async function checkProductStatus(productsRepo, product_id, inventory) {
+  const product = await productsRepo
+    .createQueryBuilder("product")
+    .select([
+      "product.id",
+      "product.selling_price",
+      "product.is_deleted",
+      "product.is_available",
+      "product.is_sold",
+    ])
+    .where("product.id = :product_id", { product_id })
+    .getOne();
+
+  if (!product) {
+    logger.warn(ERROR_MESSAGES.DATA_NOT_FOUND);
+    return { success: false, error: ERROR_MESSAGES.DATA_NOT_FOUND };
+  }
+
+  if (product.is_deleted) {
+    logger.warn(ERROR_MESSAGES.PRODUCT_DELETED);
+    return { success: false, error: ERROR_MESSAGES.PRODUCT_DELETED };
+  }
+
+  if (!product.is_available) {
+    logger.warn(ERROR_MESSAGES.PRODUCT_DELISTED);
+    return { success: false, error: ERROR_MESSAGES.PRODUCT_DELISTED };
+  }
+
+  if (inventory && product.is_sold) {
+    logger.warn(ERROR_MESSAGES.PRODUCT_SOLDOUT);
+    return { success: false, error: ERROR_MESSAGES.PRODUCT_SOLDOUT };
+  }
+  return { success: true, product };
+}
 
 // 檢查訂單是否存在
 async function checkOrder(ordersRepo, order_id) {
-  return await ordersRepo.findOne({
+  return await ordersRepo.exist({
     where: { id: order_id },
   });
 }

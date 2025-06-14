@@ -62,6 +62,48 @@ async function postUploadImage(req, res, next) {
   });
 }
 
+async function deleteImages(req, res, next) {
+  const { imageUrls } = req.body;
+
+  if (!Array.isArray(imageUrls) || imageUrls.length === 0) {
+    logger.error("未提供imageUrl:", error);
+    return next(new AppError(400, "請提供至少一個 imageUrl"));
+  }
+
+  const bucket = firebaseAdmin.storage().bucket();
+  const bucketName = config.get("secret.firebase.storageBucket");
+  const signedUrlPrefix = `https://storage.googleapis.com/${bucketName}/`;
+
+  const deletedPaths = [];
+
+  await Promise.all(
+    imageUrls.map(async (imageUrl) => {
+      if (!imageUrl.startsWith(signedUrlPrefix)) {
+        logger.error("無效的圖片網址", error);
+        throw new AppError(400, `無效的圖片網址: ${imageUrl}`);
+      }
+
+      const decodedUrl = decodeURIComponent(imageUrl);
+      const blobPath = decodedUrl.replace(signedUrlPrefix, "").split("?")[0];
+
+      const file = bucket.file(blobPath);
+      await file.delete();
+
+      deletedPaths.push(blobPath);
+    })
+  );
+
+  res.status(200).json({
+    status: "success",
+    message: "圖片已全部刪除",
+    data: {
+      deleted: deletedPaths,
+    },
+  });
+}
+
+module.exports = { postUploadImage, deleteImages };
+
 // 僅上傳一張圖片
 /*
 async function postUploadImage(req, res, next) {
@@ -102,5 +144,3 @@ async function postUploadImage(req, res, next) {
   blobStream.end(file.buffer);
 }
 */
-
-module.exports = { postUploadImage };
