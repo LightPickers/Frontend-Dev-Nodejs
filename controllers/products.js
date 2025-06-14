@@ -286,6 +286,43 @@ async function getLatestProducts(req, res, next) {
     });
   }
 
+  const cacheKey = `homepage:latest_products:limit_${limit}`;
+  try {
+    const result = await cacheOrFetch(cacheKey, async () => {
+      const latestProducts = await dataSource.getRepository("Products").find({
+        where: {
+          is_sold: false,
+          is_deleted: false,
+          is_available: true,
+        },
+        relations: {
+          Conditions: true,
+        },
+        order: {
+          created_at: "DESC",
+        },
+        take: limit,
+      });
+
+      return latestProducts.map((product) => ({
+        id: product.id,
+        name: product.name,
+        condition: product.Conditions?.name || null,
+        original_price: product.original_price,
+        selling_price: product.selling_price,
+        primary_image: product.primary_image,
+      }));
+    });
+
+    res.status(200).json({
+      status: "true",
+      data: result,
+    });
+  } catch (err) {
+    logger.error("取得最新商品失敗", err);
+    next(new AppError(500, "取得最新商品失敗"));
+  }
+  /*
   const latestProducts = await dataSource.getRepository("Products").find({
     where: { is_sold: false, is_deleted: false, is_available: true },
     relations: {
@@ -305,11 +342,7 @@ async function getLatestProducts(req, res, next) {
     selling_price: product.selling_price,
     primary_image: product.primary_image,
   }));
-
-  res.status(200).json({
-    status: "true",
-    data: result,
-  });
+  */
 }
 
 // API 18
