@@ -52,6 +52,7 @@ async function getProducts(req, res, next) {
     .leftJoinAndSelect("product.Brands", "brand")
     .leftJoinAndSelect("product.Conditions", "condition")
     .where("1=1");
+
   query.andWhere(
     "product.is_deleted = :is_deleted AND product.is_available = :is_available",
     { is_deleted: false, is_available: true }
@@ -176,6 +177,8 @@ async function getProducts(req, res, next) {
       message: errors,
     });
   }
+  // console.log(query.getSql());
+  // console.log(query.getParameters());
 
   const [selectedProducts, total] = await query
     .select([
