@@ -8,9 +8,10 @@ const router = express.Router();
 
 router.post(
   "/",
-  auth,
+  // auth,
   upload,
   handleErrorAsync(uploadController.postUploadImage)
 );
+router.delete("/images", handleErrorAsync(uploadController.deleteImages));
 
 module.exports = router;
