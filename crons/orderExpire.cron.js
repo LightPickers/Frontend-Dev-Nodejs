@@ -44,10 +44,8 @@ async function fallbackCancelExpiredOrders() {
   const orderRepo = dataSource.getRepository("Orders");
 
   // 取得 30 分鐘前的時間
-  const nowDbTime = new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString();
-  const cutoffTime = new Date(
-    new Date(nowDbTime) - 30 * 60 * 1000
-  ).toISOString(); // 30 分鐘前
+  const now = new Date().toISOString();
+  const cutoffTime = new Date(new Date(now) - 30 * 60 * 1000).toISOString(); // 30 分鐘前
 
   const expiredOrders = await orderRepo.find({
     where: {
@@ -58,7 +56,7 @@ async function fallbackCancelExpiredOrders() {
 
   for (const order of expiredOrders) {
     order.status = "canceled";
-    order.canceled_at = nowDbTime;
+    order.canceled_at = now;
     await orderRepo.save(order);
     logger.info(`[資料庫備援] 訂單 ${order.id} 超過 30 分鐘未付款，自動取消`);
   }
