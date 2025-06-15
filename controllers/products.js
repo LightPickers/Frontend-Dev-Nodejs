@@ -2,7 +2,6 @@ const { isUUID } = require("validator");
 const { dataSource } = require("../db/data-source");
 // const { titleCase } = require("typeorm/util/StringUtils.js");
 // const Conditions = require("../entities/Conditions");
-
 const logger = require("../utils/logger")("UsersController");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
@@ -15,6 +14,8 @@ const {
 // const { ServerDescription } = require("typeorm");
 // const Categories = require("../entities/Categories");
 // const Brands = require("../entities/Brands");
+const { getValidIds } = require("../utils/validFilterCache");
+const { cacheOrFetch } = require("../utils/cache"); // 加入快取工具
 
 // API 54
 async function getProducts(req, res, next) {
@@ -29,7 +30,6 @@ async function getProducts(req, res, next) {
   } = req.query;
 
   const errors = {};
-
   const pageInt = parseInt(page, 10);
   const pageSizeInt = parseInt(page_size, 10);
   const offset = (pageInt - 1) * pageSizeInt;
@@ -45,6 +45,7 @@ async function getProducts(req, res, next) {
     errors.offset = ERROR_MESSAGES.DATA_NEGATIVE;
   }
 
+  const { category_ids, brand_ids, condition_ids } = await getValidIds();
   const query = dataSource
     .getRepository("Products")
     .createQueryBuilder("product")
@@ -56,24 +57,38 @@ async function getProducts(req, res, next) {
     if (!isValidId(category_id)) {
       logger.warn(`category_id錯誤: ${ERROR_MESSAGES.ID_NOT_RULE}`);
       errors.category_id = ERROR_MESSAGES.ID_NOT_RULE;
+    } else if (!category_ids.includes(category_id)) {
+      logger.warn(`category_id錯誤: ${ERROR_MESSAGES.ID_NOT_FOUND}`);
+      errors.category_id = ERROR_MESSAGES.ID_NOT_FOUND;
     } else {
-      const categoryRepo = dataSource.getRepository("Categories");
-      const existId = await categoryRepo.findOneBy({ id: category_id });
-
-      if (!existId) {
-        logger.warn(`category_id錯誤: ${ERROR_MESSAGES.DATA_NOT_FOUND}`);
-        errors.category_id = ERROR_MESSAGES.ID_NOT_FOUND;
-      } else {
-        query.andWhere("product.category_id = :category_id", { category_id });
-      }
+      query.andWhere("product.category_id = :category_id", { category_id });
     }
+    /*
+    else {
+      // const categoryRepo = dataSource.getRepository("Categories");
+      // const existId = await categoryRepo.findOneBy({ id: category_id });
+      // if (!existId) {
+      //   logger.warn(`category_id錯誤: ${ERROR_MESSAGES.DATA_NOT_FOUND}`);
+      //   errors.category_id = ERROR_MESSAGES.ID_NOT_FOUND;
+      // } else {
+      //   query.andWhere("product.category_id = :category_id", { category_id });
+      // }    
+    }
+    */
   }
 
   if (brand_id) {
     if (!isValidId(brand_id)) {
       logger.warn(`brand_id錯誤: ${ERROR_MESSAGES.ID_NOT_RULE}`);
       errors.brand_id = ERROR_MESSAGES.ID_NOT_RULE;
+    } else if (!brand_ids.includes(brand_id)) {
+      logger.warn(`brand_id錯誤: ${ERROR_MESSAGES.ID_NOT_FOUND}`);
+      errors.brand_id = ERROR_MESSAGES.ID_NOT_FOUND;
     } else {
+      query.andWhere("product.brand_id = :brand_id", { brand_id });
+    }
+    /*
+    else {
       const brandRepo = dataSource.getRepository("Brands");
       const existId = await brandRepo.findOneBy({ id: brand_id });
 
@@ -84,13 +99,21 @@ async function getProducts(req, res, next) {
         query.andWhere("product.brand_id = :brand_id", { brand_id });
       }
     }
+    */
   }
 
   if (condition_id) {
     if (!isValidId(condition_id)) {
       logger.warn(`condition_id錯誤: ${ERROR_MESSAGES.ID_NOT_RULE}`);
       errors.condition_id = ERROR_MESSAGES.ID_NOT_RULE;
+    } else if (!condition_ids.includes(condition_id)) {
+      logger.warn(`condition_id錯誤: ${ERROR_MESSAGES.ID_NOT_FOUND}`);
+      errors.condition_id = ERROR_MESSAGES.ID_NOT_FOUND;
     } else {
+      query.andWhere("product.condition_id = :condition_id", { condition_id });
+    }
+    /*
+    else {
       const conditionRepo = dataSource.getRepository("Conditions");
       const existId = await conditionRepo.findOneBy({ id: condition_id });
 
@@ -103,6 +126,7 @@ async function getProducts(req, res, next) {
         });
       }
     }
+    */
   }
 
   if (keyword) {
@@ -165,6 +189,7 @@ async function getProducts(req, res, next) {
       { is_deleted: false, is_available: true }
     )
     .orderBy("product.created_at", "DESC")
+    .addOrderBy("product.id", "DESC") // 避免時間相同排序混亂
     .skip(offset)
     .take(pageSizeInt)
     .getManyAndCount();
@@ -197,43 +222,60 @@ async function getProducts(req, res, next) {
 
 // API 15
 async function getFeaturedProducts(req, res, next) {
-  const featuredProducts = await dataSource.getRepository("Products").find({
-    select: {
-      id: true,
-      name: true,
-      original_price: true,
-      selling_price: true,
-      Brands: { name: true },
-      Conditions: { name: true },
-      primary_image: true,
-    },
-    relations: {
-      Brands: true,
-      Conditions: true,
-    },
-    where: {
-      is_featured: true,
-      is_sold: false,
-      is_deleted: false,
-      is_available: true,
-    },
-  });
+  try {
+    const data = await cacheOrFetch(
+      "homepage:featured_products", // Redis key
+      async () => {
+        const featuredProducts = await dataSource
+          .getRepository("Products")
+          .find({
+            select: {
+              id: true,
+              name: true,
+              original_price: true,
+              selling_price: true,
+              Brands: { name: true },
+              Conditions: { name: true },
+              primary_image: true,
+            },
+            relations: {
+              Brands: true,
+              Conditions: true,
+            },
+            where: {
+              is_featured: true,
+              is_sold: false,
+              is_deleted: false,
+              is_available: true,
+            },
+          });
 
-  const result = featuredProducts.map((product) => ({
-    id: product.id,
-    name: product.name,
-    original_price: product.original_price,
-    selling_price: product.selling_price,
-    brand: product.Brands.name,
-    condition: product.Conditions.name,
-    primary_image: product.primary_image,
-  }));
+        const featuredProductsResult = featuredProducts.map((product) => ({
+          id: product.id,
+          name: product.name,
+          original_price: product.original_price,
+          selling_price: product.selling_price,
+          brand: product.Brands.name,
+          condition: product.Conditions.name,
+          primary_image: product.primary_image,
+        }));
 
-  res.status(200).json({
-    status: true,
-    message: result.length === 0 ? "找不到精選商品" : undefined,
-    data: result,
-  });
+        return featuredProductsResult;
+      },
+      3600 // 快取 1 小時
+    );
+
+    res.status(200).json({
+      status: true,
+      // ...(cacheHit ? { cache: true } : {}),
+      message: data.length === 0 ? "找不到精選商品" : undefined,
+      data: data,
+    });
+  } catch (err) {
+    // console.error("詳細錯誤：", err);
+    logger.error("取得精選商品時發生錯誤", err);
+    next(new AppError(500, "取得精選商品時發生錯誤"));
+  }
 }
 
 // API 16
@@ -248,6 +290,48 @@ async function getLatestProducts(req, res, next) {
     });
   }
 
+  const cacheKey = `homepage:latest_products:limit_${limit}`;
+  try {
+    const data = await cacheOrFetch(
+      cacheKey,
+      async () => {
+        const latestProducts = await dataSource.getRepository("Products").find({
+          where: {
+            is_sold: false,
+            is_deleted: false,
+            is_available: true,
+          },
+          relations: {
+            Conditions: true,
+          },
+          order: {
+            created_at: "DESC",
+          },
+          take: limit,
+        });
+
+        return latestProducts.map((product) => ({
+          id: product.id,
+          name: product.name,
+          condition: product.Conditions?.name || null,
+          original_price: product.original_price,
+          selling_price: product.selling_price,
+          primary_image: product.primary_image,
+        }));
+      },
+      3600 // 快取 1 小時
+    );
+
+    res.status(200).json({
+      status: "true",
+      // ...(cacheHit ? { cache: true } : {}),
+      data: data,
+    });
+  } catch (err) {
+    logger.error("取得最新商品失敗", err);
+    next(new AppError(500, "取得最新商品失敗"));
+  }
+  /*
   const latestProducts = await dataSource.getRepository("Products").find({
     where: { is_sold: false, is_deleted: false, is_available: true },
     relations: {
@@ -267,11 +351,7 @@ async function getLatestProducts(req, res, next) {
     selling_price: product.selling_price,
     primary_image: product.primary_image,
   }));
-
-  res.status(200).json({
-    status: "true",
-    data: result,
-  });
+  */
 }
 
 // API 18
