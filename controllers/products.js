@@ -53,6 +53,11 @@ async function getProducts(req, res, next) {
     .leftJoinAndSelect("product.Conditions", "condition")
     .where("1=1");
 
+  query.andWhere(
+    "product.is_deleted = :is_deleted AND product.is_available = :is_available",
+    { is_deleted: false, is_available: true }
+  );
+
   if (category_id) {
     if (!isValidId(category_id)) {
       logger.warn(`category_id錯誤: ${ERROR_MESSAGES.ID_NOT_RULE}`);
@@ -172,6 +177,8 @@ async function getProducts(req, res, next) {
       message: errors,
     });
   }
+  // console.log(query.getSql());
+  // console.log(query.getParameters());
 
   const [selectedProducts, total] = await query
     .select([
@@ -184,10 +191,6 @@ async function getProducts(req, res, next) {
       "product.primary_image",
       "product.created_at",
     ])
-    .where(
-      "product.is_deleted = :is_deleted AND product.is_available = :is_available",
-      { is_deleted: false, is_available: true }
-    )
     .orderBy("product.created_at", "DESC")
     .addOrderBy("product.id", "DESC") // 避免時間相同排序混亂
     .skip(offset)
