@@ -195,6 +195,7 @@ async function getSavedList(req, res, next) {
       is_sold: row.is_sold,
       is_deleted: row.is_deleted,
       updated_at: row.updated_at,
+      condition_name: row.condition_name,
     },
     is_in_cart: row.in_cart_id !== null,
   }));
