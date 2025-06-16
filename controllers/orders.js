@@ -196,12 +196,14 @@ async function getOrder(req, res, next) {
   }
 
   // 200
+  const shippingFee = 60;
   const orderInfo = await ordersRepo
     .createQueryBuilder("order")
     .leftJoinAndSelect("order.Users", "user")
     .leftJoinAndSelect("order.Coupons", "coupon")
     .select([
       "order.id AS id",
+      "order.merchant_order_no AS merchant_order_no",
       "order.created_at AS created_at",
       "order.status AS status",
       "order.amount AS amount",
@@ -217,10 +219,11 @@ async function getOrder(req, res, next) {
       "order.shipping_method AS shipping_method",
       "order.payment_method AS payment_method",
       "order.desired_date AS desired_date",
-      "order.amount * (1 - COALESCE(coupon.discount, 0) * 0.1) AS discount_price",
-      "order.amount - (order.amount * (1 - COALESCE(coupon.discount, 0) * 0.1)) AS final_amount",
+      "(order.amount - :shippingFee) / COALESCE(coupon.discount, 10) * 10 AS final_amount",
+      "(order.amount - :shippingFee) / COALESCE(coupon.discount, 10) * (10 - COALESCE(coupon.discount, 0)) AS discount_price",
+      // "(order.amount - :shippingFee) * COALESCE(coupon.discount, 0) * 0.1 AS final_amount",
     ])
-    .where("order.id = :order_id", { order_id })
+    .where("order.id = :order_id", { order_id, shippingFee })
     .getRawOne();
 
   const orderItems = await orderItemsRepo
