@@ -161,6 +161,7 @@ async function getSavedList(req, res, next) {
       "cart.product_id = product.id AND cart.user_id = :user_id",
       { user_id }
     )
+    .leftJoin("Conditions", "condition", "condition.id = product.condition_id")
     .select([
       "fav.id AS id",
       "fav.created_at AS created_at",
@@ -174,6 +175,7 @@ async function getSavedList(req, res, next) {
       "product.is_deleted AS is_deleted",
       "product.updated_at AS updated_at",
       "cart.product_id AS in_cart_id",
+      "condition.name AS condition_name",
     ])
     .where("fav.user_id = :user_id", { user_id })
     .orderBy(sortField, orderBy)
