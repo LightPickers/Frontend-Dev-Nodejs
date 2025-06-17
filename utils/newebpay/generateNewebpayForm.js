@@ -1,4 +1,4 @@
-const config = require("../config/index");
+const config = require("../../config/index");
 const {
   create_mpg_aes_encrypt,
   create_mpg_sha_encrypt,
