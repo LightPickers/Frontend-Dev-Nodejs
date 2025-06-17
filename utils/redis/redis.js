@@ -1,7 +1,7 @@
 const { createClient } = require("redis");
-const config = require("../config/index");
-const logger = require("./logger")("Redis");
-const { restorePendingOrdersToRedis } = require("../utils/redisRestore");
+const config = require("../../config/index");
+const logger = require("../logger")("Redis");
+const { restorePendingOrdersToRedis } = require("../redis/redisRestore");
 
 const redis = createClient({
   url: config.get("redisSecret.redisUrl"),
