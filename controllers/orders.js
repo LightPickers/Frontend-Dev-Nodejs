@@ -223,8 +223,12 @@ async function getOrder(req, res, next) {
       "(order.amount - :shippingFee) / COALESCE(coupon.discount, 10) * (10 - COALESCE(coupon.discount, 0)) AS discount_price",
       // "(order.amount - :shippingFee) * COALESCE(coupon.discount, 0) * 0.1 AS final_amount",
     ])
-    .where("order.id = :order_id", { order_id, shippingFee })
+    .where("order.id = :order_id", { order_id })
+    .setParameters({ shippingFee })
     .getRawOne();
+
+  // 在 orderInfo 新增 shippingFee 運費
+  orderInfo.shippingFee = shippingFee;
 
   const orderItems = await orderItemsRepo
     .createQueryBuilder("orderItems")
