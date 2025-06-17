@@ -15,7 +15,7 @@ const {
 // const Categories = require("../entities/Categories");
 // const Brands = require("../entities/Brands");
 const { getValidIds } = require("../utils/validFilterCache");
-const { cacheOrFetch } = require("../utils/cache"); // 加入快取工具
+const { cacheOrFetch } = require("../utils/redis/cache"); // 加入快取工具
 
 // API 54
 async function getProducts(req, res, next) {
