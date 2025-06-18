@@ -21,9 +21,13 @@ const { cacheOrFetch } = require("../utils/redis/cache"); // 加入快取工具
 async function getProducts(req, res, next) {
   const {
     category_id,
-    brand_id,
-    condition_id,
+    brand_ids, // 多選品牌
+    condition_ids, // 多選狀態
+    brand_id, // 保留向後相容（單選）
+    condition_id, // 保留向後相容（單選）
     keyword,
+    min_price,
+    max_price,
     price_range,
     page = 1,
     page_size = 10,
@@ -45,7 +49,12 @@ async function getProducts(req, res, next) {
     errors.offset = ERROR_MESSAGES.DATA_NEGATIVE;
   }
 
-  const { category_ids, brand_ids, condition_ids } = await getValidIds();
+  const {
+    category_ids,
+    brand_ids: valid_brand_ids,
+    condition_ids: valid_condition_ids,
+  } = await getValidIds();
+
   const query = dataSource
     .getRepository("Products")
     .createQueryBuilder("product")
@@ -58,6 +67,7 @@ async function getProducts(req, res, next) {
     { is_deleted: false, is_available: true }
   );
 
+  // 處理類別篩選
   if (category_id) {
     if (!isValidId(category_id)) {
       logger.warn(`category_id錯誤: ${ERROR_MESSAGES.ID_NOT_RULE}`);
@@ -68,62 +78,71 @@ async function getProducts(req, res, next) {
     } else {
       query.andWhere("product.category_id = :category_id", { category_id });
     }
-    /*
-    else {
-      // const categoryRepo = dataSource.getRepository("Categories");
-      // const existId = await categoryRepo.findOneBy({ id: category_id });
-      // if (!existId) {
-      //   logger.warn(`category_id錯誤: ${ERROR_MESSAGES.DATA_NOT_FOUND}`);
-      //   errors.category_id = ERROR_MESSAGES.ID_NOT_FOUND;
-      // } else {
-      //   query.andWhere("product.category_id = :category_id", { category_id });
-      // }    
-    }
-    */
   }
 
-  if (brand_id) {
-    if (!isValidId(brand_id)) {
-      logger.warn(`brand_id錯誤: ${ERROR_MESSAGES.ID_NOT_RULE}`);
-      errors.brand_id = ERROR_MESSAGES.ID_NOT_RULE;
-    } else if (!brand_ids.includes(brand_id)) {
-      logger.warn(`brand_id錯誤: ${ERROR_MESSAGES.ID_NOT_FOUND}`);
-      errors.brand_id = ERROR_MESSAGES.ID_NOT_FOUND;
-    } else {
-      query.andWhere("product.brand_id = :brand_id", { brand_id });
-    }
-    /*
-    else {
-      const brandRepo = dataSource.getRepository("Brands");
-      const existId = await brandRepo.findOneBy({ id: brand_id });
+  // 處理品牌篩選（優先使用多選，如果沒有多選則使用單選）
+  const brandIdsToFilter = brand_ids || brand_id;
+  if (brandIdsToFilter) {
+    if (brand_ids) {
+      // 多選品牌處理
+      const brandIdArray = brandIdsToFilter
+        .split(",")
+        .filter((id) => id.trim());
 
-      if (!existId) {
-        logger.warn(`brand_id錯誤: ${ERROR_MESSAGES.DATA_NOT_FOUND}`);
+      // 驗證每個品牌 ID
+      const invalidBrandIds = brandIdArray.filter(
+        (id) => !isValidId(id) || !valid_brand_ids.includes(id)
+      );
+      if (invalidBrandIds.length > 0) {
+        errors.brand_ids = `無效的品牌 ID: ${invalidBrandIds.join(", ")}`;
+      } else {
+        query.andWhere("product.brand_id IN (:...brandIds)", {
+          brandIds: brandIdArray,
+        });
+      }
+    } else if (brand_id) {
+      // 單選品牌處理（向後相容）
+      if (!isValidId(brand_id)) {
+        logger.warn(`brand_id錯誤: ${ERROR_MESSAGES.ID_NOT_RULE}`);
+        errors.brand_id = ERROR_MESSAGES.ID_NOT_RULE;
+      } else if (!valid_brand_ids.includes(brand_id)) {
+        logger.warn(`brand_id錯誤: ${ERROR_MESSAGES.ID_NOT_FOUND}`);
         errors.brand_id = ERROR_MESSAGES.ID_NOT_FOUND;
       } else {
         query.andWhere("product.brand_id = :brand_id", { brand_id });
       }
     }
-    */
   }
 
-  if (condition_id) {
-    if (!isValidId(condition_id)) {
-      logger.warn(`condition_id錯誤: ${ERROR_MESSAGES.ID_NOT_RULE}`);
-      errors.condition_id = ERROR_MESSAGES.ID_NOT_RULE;
-    } else if (!condition_ids.includes(condition_id)) {
-      logger.warn(`condition_id錯誤: ${ERROR_MESSAGES.ID_NOT_FOUND}`);
-      errors.condition_id = ERROR_MESSAGES.ID_NOT_FOUND;
-    } else {
-      query.andWhere("product.condition_id = :condition_id", { condition_id });
-    }
-    /*
-    else {
-      const conditionRepo = dataSource.getRepository("Conditions");
-      const existId = await conditionRepo.findOneBy({ id: condition_id });
+  // 處理狀態篩選（優先使用多選，如果沒有多選則使用單選）
+  const conditionIdsToFilter = condition_ids || condition_id;
+  if (conditionIdsToFilter) {
+    if (condition_ids) {
+      // 多選狀態處理
+      const conditionIdArray = conditionIdsToFilter
+        .split(",")
+        .filter((id) => id.trim());
 
-      if (!existId) {
-        logger.warn(`condition_id錯誤: ${ERROR_MESSAGES.DATA_NOT_FOUND}`);
+      // 驗證每個狀態 ID
+      const invalidConditionIds = conditionIdArray.filter(
+        (id) => !isValidId(id) || !valid_condition_ids.includes(id)
+      );
+      if (invalidConditionIds.length > 0) {
+        errors.condition_ids = `無效的狀態 ID: ${invalidConditionIds.join(
+          ", "
+        )}`;
+      } else {
+        query.andWhere("product.condition_id IN (:...conditionIds)", {
+          conditionIds: conditionIdArray,
+        });
+      }
+    } else if (condition_id) {
+      // 單選狀態處理（向後相容）
+      if (!isValidId(condition_id)) {
+        logger.warn(`condition_id錯誤: ${ERROR_MESSAGES.ID_NOT_RULE}`);
+        errors.condition_id = ERROR_MESSAGES.ID_NOT_RULE;
+      } else if (!valid_condition_ids.includes(condition_id)) {
+        logger.warn(`condition_id錯誤: ${ERROR_MESSAGES.ID_NOT_FOUND}`);
         errors.condition_id = ERROR_MESSAGES.ID_NOT_FOUND;
       } else {
         query.andWhere("product.condition_id = :condition_id", {
@@ -131,14 +150,47 @@ async function getProducts(req, res, next) {
         });
       }
     }
-    */
   }
 
+  // 處理關鍵字搜尋
   if (keyword) {
     query.andWhere("product.name ILIKE :keyword", { keyword: `%${keyword}%` });
   }
 
-  if (price_range) {
+  // 處理價格篩選（優先使用分離參數）
+  if (min_price || max_price) {
+    if (min_price) {
+      const minPriceInt = parseInt(min_price, 10);
+      if (!isValidInteger(minPriceInt) || minPriceInt < 0) {
+        errors.min_price = ERROR_MESSAGES.PRICE_NOT_RULE;
+      } else {
+        query.andWhere("product.selling_price >= :minPrice", {
+          minPrice: minPriceInt,
+        });
+      }
+    }
+
+    if (max_price) {
+      const maxPriceInt = parseInt(max_price, 10);
+      if (!isValidInteger(maxPriceInt) || maxPriceInt < 0) {
+        errors.max_price = ERROR_MESSAGES.PRICE_NOT_RULE;
+      } else {
+        query.andWhere("product.selling_price <= :maxPrice", {
+          maxPrice: maxPriceInt,
+        });
+      }
+    }
+
+    // 驗證價格範圍邏輯
+    if (min_price && max_price) {
+      const minPriceInt = parseInt(min_price, 10);
+      const maxPriceInt = parseInt(max_price, 10);
+      if (minPriceInt > maxPriceInt) {
+        errors.price_range = "最低價格不能大於最高價格";
+      }
+    }
+  } else if (price_range) {
+    // 保留原有的 price_range 邏輯（向後相容）
     try {
       const price_parsed = JSON.parse(price_range);
       if (
@@ -150,18 +202,17 @@ async function getProducts(req, res, next) {
       ) {
         errors.price_range = ERROR_MESSAGES.PRICE_RANGE_NOT_RULE;
       } else {
-        const min_price = parseInt(price_parsed[0], 10);
-        const max_price = parseInt(price_parsed[1], 10);
+        const min_price_val = parseInt(price_parsed[0], 10);
+        const max_price_val = parseInt(price_parsed[1], 10);
 
-        if (!isValidInteger(min_price) || !isValidInteger(max_price)) {
+        if (!isValidInteger(min_price_val) || !isValidInteger(max_price_val)) {
           errors.price_range = ERROR_MESSAGES.PRICE_NOT_RULE;
-        } else if (min_price > max_price) {
+        } else if (min_price_val > max_price_val) {
           errors.price_range = ERROR_MESSAGES.PRICE_NOT_RULE;
         } else {
-          // 根據價格區間來篩選資料
           query.andWhere("product.selling_price BETWEEN :min AND :max", {
-            min: min_price,
-            max: max_price,
+            min: min_price_val,
+            max: max_price_val,
           });
         }
       }
@@ -177,8 +228,6 @@ async function getProducts(req, res, next) {
       message: errors,
     });
   }
-  // console.log(query.getSql());
-  // console.log(query.getParameters());
 
   const [selectedProducts, total] = await query
     .select([
@@ -192,13 +241,13 @@ async function getProducts(req, res, next) {
       "product.created_at",
     ])
     .orderBy("product.created_at", "DESC")
-    .addOrderBy("product.id", "DESC") // 避免時間相同排序混亂
+    .addOrderBy("product.id", "DESC")
     .skip(offset)
     .take(pageSizeInt)
     .getManyAndCount();
 
   const total_pages = Math.ceil(total / pageSizeInt);
-  console.log(total);
+  console.log("Total products found:", total);
 
   if (pageInt > total_pages && total_pages > 0) {
     logger.warn(ERROR_MESSAGES.PAGE_OUT_OF_RANGE);
