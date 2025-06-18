@@ -5,7 +5,11 @@ const generateJWT = require("../utils/generateJWT");
 const { validateFields } = require("../utils/validateFields");
 const { EMAIL_RULE } = require("../utils/validateRules");
 const { isValidEmail } = require("../utils/validUtils");
-const { registerSuccess, resetPassword } = require("../utils/sendEmail");
+const {
+  registerSuccess,
+  resetPassword,
+  orderConfirm,
+} = require("../utils/sendEmail");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 
