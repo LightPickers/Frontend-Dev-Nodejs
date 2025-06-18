@@ -1,7 +1,7 @@
 const cron = require("node-cron");
 const { dataSource } = require("../db/data-source");
 const { LessThan } = require("typeorm");
-const { redis, isRedisConnected } = require("../utils/redis");
+const { redis, isRedisConnected } = require("../utils/redis/redis");
 const logger = require("../utils/logger")("OrderExpire.cron");
 
 async function cancelExpiredOrders() {

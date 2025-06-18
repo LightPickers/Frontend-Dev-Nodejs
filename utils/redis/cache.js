@@ -1,5 +1,5 @@
 const { redis, isRedisConnected } = require("./redis");
-const logger = require("./logger")("Cache");
+const logger = require("../logger")("Cache");
 
 async function cacheOrFetch(key, fetchFn, ttlInSec = 3600) {
   try {

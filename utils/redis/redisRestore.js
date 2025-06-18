@@ -1,6 +1,6 @@
-const { dataSource } = require("../db/data-source");
+const { dataSource } = require("../../db/data-source");
 const { MoreThan } = require("typeorm");
-const logger = require("./logger")("RedisRestore");
+const logger = require("../logger")("RedisRestore");
 
 // 重新儲存未滿 30 分鐘的待付款訂單
 async function restorePendingOrdersToRedis() {

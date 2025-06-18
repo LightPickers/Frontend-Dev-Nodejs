@@ -1,6 +1,6 @@
 const { In } = require("typeorm");
 const { dataSource } = require("../db/data-source");
-const { redis } = require("../utils/redis");
+const { redis } = require("../utils/redis/redis");
 const logger = require("../utils/logger")("OrdersController");
 const { isUUID } = require("validator");
 const {
@@ -9,7 +9,9 @@ const {
   isValidStringArray,
   checkOrder,
 } = require("../utils/validUtils");
-const { generateNewebpayForm } = require("../utils/generateNewebpayForm");
+const {
+  generateNewebpayForm,
+} = require("../utils/newebpay/generateNewebpayForm");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 
@@ -196,12 +198,14 @@ async function getOrder(req, res, next) {
   }
 
   // 200
+  const shippingFee = 60;
   const orderInfo = await ordersRepo
     .createQueryBuilder("order")
     .leftJoinAndSelect("order.Users", "user")
     .leftJoinAndSelect("order.Coupons", "coupon")
     .select([
       "order.id AS id",
+      "order.merchant_order_no AS merchant_order_no",
       "order.created_at AS created_at",
       "order.status AS status",
       "order.amount AS amount",
@@ -217,11 +221,16 @@ async function getOrder(req, res, next) {
       "order.shipping_method AS shipping_method",
       "order.payment_method AS payment_method",
       "order.desired_date AS desired_date",
-      "order.amount * (1 - COALESCE(coupon.discount, 0) * 0.1) AS discount_price",
-      "order.amount - (order.amount * (1 - COALESCE(coupon.discount, 0) * 0.1)) AS final_amount",
+      "(order.amount - :shippingFee) / COALESCE(coupon.discount, 10) * 10 AS final_amount",
+      "(order.amount - :shippingFee) / COALESCE(coupon.discount, 10) * (10 - COALESCE(coupon.discount, 0)) AS discount_price",
+      // "(order.amount - :shippingFee) * COALESCE(coupon.discount, 0) * 0.1 AS final_amount",
     ])
     .where("order.id = :order_id", { order_id })
+    .setParameters({ shippingFee })
     .getRawOne();
+
+  // 在 orderInfo 新增 shippingFee 運費
+  orderInfo.shippingFee = shippingFee;
 
   const orderItems = await orderItemsRepo
     .createQueryBuilder("orderItems")
