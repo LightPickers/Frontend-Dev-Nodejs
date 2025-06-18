@@ -1,7 +1,7 @@
 // utils/validFilterCache.js
 const { dataSource } = require("../db/data-source");
-const { cacheOrFetch } = require("./cache");
-const { redis } = require("./redis");
+const { cacheOrFetch } = require("./redis/cache");
+const { redis } = require("./redis/redis");
 
 const VALID_FILTER_KEY = "filters:valid_ids";
 

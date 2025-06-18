@@ -1,5 +1,5 @@
 const { dataSource } = require("../db/data-source");
-const logger = require("../utils/logger")("UsersController");
+const logger = require("../utils/logger")("CcategoryController");
 const AppError = require("../utils/appError");
 // const ERROR_MESSAGES = require("../utils/errorMessages");
 // const {
@@ -7,7 +7,7 @@ const AppError = require("../utils/appError");
 //   isValidString,
 //   checkIfProductSaved,
 // } = require("../utils/validUtils");
-const { cacheOrFetch } = require("../utils/cache"); // 加入快取工具
+const { cacheOrFetch } = require("../utils/redis/cache"); // 加入快取工具
 
 /*
 async function getFeaturedCategory(req, res, next) {

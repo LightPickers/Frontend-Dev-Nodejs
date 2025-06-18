@@ -1,5 +1,5 @@
 const { dataSource } = require("../db/data-source");
-const { redis } = require("../utils/redis");
+const { redis } = require("../utils/redis/redis");
 const logger = require("../utils/logger")("CartController");
 const {
   isUndefined,

@@ -8,7 +8,7 @@ const config = require("../config/index");
 const app = require("../app"); // 導入 app.js
 const logger = require("../utils/logger")("www");
 const { dataSource } = require("../db/data-source");
-const { connectRedis } = require("../utils/redis");
+const { connectRedis } = require("../utils/redis/redis");
 
 const port = config.get("web.port");
 

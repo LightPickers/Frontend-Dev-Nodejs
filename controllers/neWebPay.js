@@ -1,11 +1,11 @@
 const { In } = require("typeorm");
 const { dataSource } = require("../db/data-source");
 const logger = require("../utils/logger")("NeWebPayController");
-const { redis } = require("../utils/redis");
+const { redis } = require("../utils/redis/redis");
 const {
   create_mpg_sha_encrypt,
   create_mpg_aes_decrypt,
-} = require("../utils/neWebPayCrypto");
+} = require("../utils/newebpay/neWebPayCrypto");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 const { isValidString } = require("../utils/validUtils");

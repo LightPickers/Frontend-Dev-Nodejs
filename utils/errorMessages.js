@@ -56,6 +56,9 @@ const ERROR_MESSAGES = {
   FILE_UPLOAD: "上傳檔案時發生錯誤",
   PAYMENT_METHOD_NOT_RULE: "付款方式 不符合規則",
   SHIPPING_METHOD_NOT_RULE: "寄送方式 不符合規則",
+  MESSAGE_NOT_EMPTY: "訊息不得為空白",
+  MESSAGE_LENGTH_TOO_LONG: "訊息過長，請在 75 個字以內",
+  NOT_ENTER_BANNED_WORDS: "請勿輸入不當內容",
 };
 
 module.exports = ERROR_MESSAGES;

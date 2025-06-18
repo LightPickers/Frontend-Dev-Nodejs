@@ -1,6 +1,6 @@
 const { In } = require("typeorm");
 const { dataSource } = require("../db/data-source");
-const { redis } = require("../utils/redis");
+const { redis } = require("../utils/redis/redis");
 const logger = require("../utils/logger")("OrdersController");
 const { isUUID } = require("validator");
 const {
@@ -9,7 +9,9 @@ const {
   isValidStringArray,
   checkOrder,
 } = require("../utils/validUtils");
-const { generateNewebpayForm } = require("../utils/generateNewebpayForm");
+const {
+  generateNewebpayForm,
+} = require("../utils/newebpay/generateNewebpayForm");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 
