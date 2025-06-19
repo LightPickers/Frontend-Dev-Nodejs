@@ -118,11 +118,13 @@ async function postNotify(req, res, next) {
         product.is_sold = true;
       }
 
+      // console.log("測試有沒有跑notify");
       await productRepo.save(products);
       // console.log("成功結帳並更新商品狀態");
     });
   } catch (err) {
     logger.error("藍新通知處理失敗：", err);
+    // console.log(err);
 
     // 如果是 AppError 傳進來的，直接丟給 error middleware
     if (err instanceof AppError) return next(err);
