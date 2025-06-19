@@ -230,7 +230,7 @@ async function getOrder(req, res, next) {
       "order.payment_method AS payment_method",
       "order.desired_date AS desired_date",
       "(order.amount - :shippingFee) / COALESCE(coupon.discount, 10) * 10 AS final_amount",
-      "(order.amount - :shippingFee) / COALESCE(coupon.discount, 10) * (10 - COALESCE(coupon.discount, 0)) AS discount_price",
+      "((order.amount - :shippingFee) / COALESCE(coupon.discount, 10) * 10) - (order.amount - :shippingFee) AS discount_price",
       // "(order.amount - :shippingFee) * COALESCE(coupon.discount, 0) * 0.1 AS final_amount",
     ])
     .where("order.id = :order_id", { order_id })
