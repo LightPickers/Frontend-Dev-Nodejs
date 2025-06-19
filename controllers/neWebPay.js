@@ -9,6 +9,7 @@ const {
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 const { isValidString } = require("../utils/validUtils");
+const { orderConfirm } = require("../utils/sendEmail");
 
 async function postReturn(req, res, next) {
   const resData = req.body;
@@ -50,10 +51,12 @@ async function postNotify(req, res, next) {
   const info = create_mpg_aes_decrypt(resData.TradeInfo); // 解密後的藍新交易資料
   const result = info.Result;
 
+  let order; //訂單內容(email也需要，故設為全域變數)
+
   try {
     await dataSource.transaction(async (manager) => {
       const orderRepo = manager.getRepository("Orders");
-      const order = await orderRepo.findOneBy({
+      order = await orderRepo.findOneBy({
         merchant_order_no: result.MerchantOrderNo, // 用藍新回傳的 MerchantOrderNo 來查詢
       });
       // 確認訂單是否存在
@@ -115,19 +118,77 @@ async function postNotify(req, res, next) {
         product.is_sold = true;
       }
 
+      // console.log("測試有沒有跑notify");
       await productRepo.save(products);
+      // console.log("成功結帳並更新商品狀態");
     });
-
-    return res.status(200).send("OK");
   } catch (err) {
     logger.error("藍新通知處理失敗：", err);
+    // console.log(err);
 
     // 如果是 AppError 傳進來的，直接丟給 error middleware
     if (err instanceof AppError) return next(err);
 
     // 否則是內部錯誤
     return next(new AppError(500, "付款完成但後端處理失敗"));
+    // logger.error("付款完成但後端處理失敗");
   }
+
+  try {
+    // console.log("開始寄信");
+    const userRepo = dataSource.getRepository("Users");
+    const user = await userRepo.findOneBy({ id: order.user_id });
+
+    const orderItemsFull = await dataSource
+      .getRepository("Order_items")
+      .find({ where: { order_id: order.id }, relations: { Products: true } });
+
+    const productList = orderItemsFull.map((item) => ({
+      name: item.Products.name,
+      quantity: item.quantity,
+      price: item.Products.selling_price,
+    }));
+    // console.log(productList);
+
+    // 找出折扣
+    const couponRepo = dataSource.getRepository("Coupons");
+    let discountRate = 0;
+    if (order.coupon_id) {
+      const coupon = await couponRepo.findOne({
+        where: { id: order.coupon_id },
+        select: ["discount"],
+      });
+      if (coupon && typeof coupon.discount === "number") {
+        discountRate = coupon.discount * 0.1;
+      }
+    }
+    // console.log("折扣碼成功找到");
+    const subtotal = order.amount - 60;
+    const discountAmount = Math.round(subtotal * (1 - discountRate));
+
+    await orderConfirm(user.email, {
+      customerName: user.name,
+      orderNumber: order.merchant_order_no,
+      orderDate: order.created_at,
+      products: productList,
+      subtotal: subtotal,
+      shippingFee: 60,
+      discount: discountAmount,
+      total: order.amount,
+      paymentMethod: order.payment_method,
+      recipientName: user.name,
+      recipientPhone: user.phone,
+      recipientAddress: `${user.address_zipcode} ${user.address_city} ${user.address_district} ${user.address_detail}`,
+    });
+    // console.log("寄信成功");
+
+    logger.info(`已寄出訂單確認信給 ${user.email}`);
+  } catch (emailErr) {
+    logger.error("訂單完成但寄送 Email 失敗：", emailErr); // 不 return，因為付款邏輯已經成功，這只是通知信失敗
+    // console.log(emailErr);
+  }
+
+  return res.status(200).send("OK");
 }
 
 module.exports = {
