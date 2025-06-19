@@ -163,7 +163,7 @@ async function postNotify(req, res, next) {
       paymentMethod: order.payment_method,
       recipientName: user.name,
       recipientPhone: user.phone,
-      recipientAddress: `${user.address_zipcode} ${user.address_detail}`,
+      recipientAddress: `${user.address_zipcode} ${user.address_city} ${user.address_district} ${user.address_detail}`,
     });
 
     return res.status(200).send("OK");
