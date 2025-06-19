@@ -196,7 +196,7 @@ async function postNotify(req, res, next) {
     await redis.del("homepage:latest_products:limit_6");
     await redis.del("homepage:featured_products");
 
-    /* 先判斷，再輕快取
+    /* 先判斷，再清快取
     // 取得該訂單商品清單
     const orderProductRepo = dataSource.getRepository("Order_items");
     const orderedProducts = await orderProductRepo.find({
@@ -239,6 +239,7 @@ async function postNotify(req, res, next) {
     */
   } catch (err) {
     logger.warn("Redis 快取失效處理失敗：", err); // 不 throw，避免影響整個 controller
+    // console.log(err);
   }
 
   return res.status(200).send("OK");
