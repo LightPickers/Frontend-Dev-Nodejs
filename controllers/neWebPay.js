@@ -130,12 +130,12 @@ async function postNotify(req, res, next) {
     if (err instanceof AppError) return next(err);
 
     // 否則是內部錯誤
-    return next(new AppError(500, "付款完成但後端處理失敗"));
-    // logger.error("付款完成但後端處理失敗");
+    // return next(new AppError(500, "付款完成但後端處理失敗"));
+    logger.error("付款完成但後端處理失敗");
   }
 
   try {
-    // console.log("開始寄信");
+    console.log("開始寄信");
     const userRepo = dataSource.getRepository("Users");
     const user = await userRepo.findOneBy({ id: order.user_id });
 
@@ -148,11 +148,11 @@ async function postNotify(req, res, next) {
       quantity: item.quantity,
       price: item.Products.selling_price,
     }));
-    // console.log(productList);
+    console.log(productList);
 
     // 找出折扣
     const couponRepo = dataSource.getRepository("Coupons");
-    let discountRate = 0;
+    let discountRate = 1;
     if (order.coupon_id) {
       const coupon = await couponRepo.findOne({
         where: { id: order.coupon_id },
@@ -162,9 +162,11 @@ async function postNotify(req, res, next) {
         discountRate = coupon.discount * 0.1;
       }
     }
-    // console.log("折扣碼成功找到");
-    const subtotal = order.amount - 60;
+    console.log("折扣碼成功找到");
+    const subtotal = (order.amount - 60) / (discountRate ?? 1);
     const discountAmount = Math.round(subtotal * (1 - discountRate));
+    console.log(subtotal, discountAmount);
+    const paymenMethod = "信用卡";
 
     await orderConfirm(user.email, {
       customerName: user.name,
@@ -175,17 +177,18 @@ async function postNotify(req, res, next) {
       shippingFee: 60,
       discount: discountAmount,
       total: order.amount,
-      paymentMethod: order.payment_method,
+      // paymentMethod: order.payment_method,
+      paymenMethod: paymenMethod,
       recipientName: user.name,
       recipientPhone: user.phone,
       recipientAddress: `${user.address_zipcode} ${user.address_city} ${user.address_district} ${user.address_detail}`,
     });
-    // console.log("寄信成功");
+    console.log("寄信成功");
 
     logger.info(`已寄出訂單確認信給 ${user.email}`);
   } catch (emailErr) {
     logger.error("訂單完成但寄送 Email 失敗：", emailErr); // 不 return，因為付款邏輯已經成功，這只是通知信失敗
-    // console.log(emailErr);
+    console.log(emailErr);
   }
 
   return res.status(200).send("OK");
