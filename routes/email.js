@@ -15,6 +15,7 @@ router.post(
 );
 router.post(
   "/order-confirm",
+  auth,
   handleErrorAsync(emailController.postOrderConfirm)
 );
 
