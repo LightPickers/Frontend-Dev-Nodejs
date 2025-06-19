@@ -59,6 +59,9 @@ const ERROR_MESSAGES = {
   MESSAGE_NOT_EMPTY: "訊息不得為空白",
   MESSAGE_LENGTH_TOO_LONG: "訊息過長，請在 75 個字以內",
   NOT_ENTER_BANNED_WORDS: "請勿輸入不當內容",
+  EMAIL_FIELD: "缺少必要欄位（to、orderNumber 或 products）",
+  EMAIL_PRODUCT:
+    "商品清單中有項目格式不正確（需包含 name、quantity、price 且型別正確）",
 };
 
 module.exports = ERROR_MESSAGES;

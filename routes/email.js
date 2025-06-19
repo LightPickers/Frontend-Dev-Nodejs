@@ -13,5 +13,9 @@ router.post(
   "/reset-password",
   handleErrorAsync(emailController.postResetPassword)
 );
+router.post(
+  "/order-confirm",
+  handleErrorAsync(emailController.postOrderConfirm)
+);
 
 module.exports = router;
