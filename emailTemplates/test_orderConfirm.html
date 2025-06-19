@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>拾光堂｜感謝您的訂購</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #ffffff;
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 24px;
+        color: #000;
+        background-color: #ffffff;
+      }
+
+      .logo {
+        height: 60px;
+        margin: 0 auto 40px;
+        display: block;
+      }
+
+      h2 {
+        font-size: 20px;
+        font-weight: bold;
+      }
+
+      p {
+        font-size: 14px;
+        line-height: 1.6;
+        margin-top: 14px;
+      }
+
+      .order-summary {
+        margin-top: 30px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 8px;
+        font-size: 14px;
+        border-bottom: 1px solid #ccc;
+      }
+
+      .footer {
+        background-color: #000;
+        color: #fff;
+        text-align: center;
+        padding: 18px;
+        font-size: 14px;
+        margin-top: 40px;
+      }
+
+      @media (max-width: 600px) {
+        .container {
+          padding: 16px;
+        }
+
+        h2 {
+          font-size: 18px;
+        }
+
+        p,
+        th,
+        td {
+          font-size: 13px;
+        }
+
+        .footer {
+          font-size: 13px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <img
+        src="https://res.cloudinary.com/deb960ezd/image/upload/v1748369575/%E6%8B%BE%E5%85%89%E5%A0%82_Logo_kqiq1f.png"
+        alt="拾光堂 LOGO"
+        class="logo"
+      />
+
+      <h2>感謝您的訂購</h2>
+      <p>親愛的 {{customerName}}，您好：</p>
+      <p>
+        我們已收到您在拾光堂的訂單（編號：<strong>{{orderNumber}}</strong>），
+        訂單成立時間為 <strong>{{orderDate}}</strong>。
+      </p>
+      <p>
+        我們將儘速為您處理並出貨，出貨後會再寄送通知信件。若您有任何問題，歡迎透過網站與我們聯繫。
+      </p>
+
+      <div class="order-summary">
+        <h3>訂單明細</h3>
+
+        <table>
+          <thead>
+            <tr>
+              <th>商品名稱</th>
+              <th>數量</th>
+              <th>價格</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- 以下為範例，可由後端動態插入 -->
+            <tr>
+              <td>Canon AE-1 復古底片相機</td>
+              <td>1</td>
+              <td>NT$ 3,200</td>
+            </tr>
+            <tr>
+              <td>Nikon 50mm f/1.8 鏡頭</td>
+              <td>1</td>
+              <td>NT$ 2,400</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p><strong>商品總計：</strong>NT$ {{subtotal}}</p>
+        <p><strong>運費：</strong>NT$ {{shippingFee}}</p>
+        <p><strong>優惠折抵：</strong>- NT$ {{discount}}</p>
+        <p>
+          <strong>應付總額：</strong
+          ><span style="font-size: 16px">NT$ {{total}}</span>
+        </p>
+        <p><strong>付款方式：</strong>{{paymentMethod}}</p>
+        <p>
+          <strong>收件地址：</strong
+          >{{recipientName}}，{{recipientPhone}}<br />{{recipientAddress}}
+        </p>
+      </div>
+
+      <p>再次感謝您在拾光堂購物，讓光影的故事繼續流轉。</p>
+      <p>拾光堂團隊 敬上</p>
+
+      <hr style="margin: 30px 0" />
+
+      <p style="margin: 0">
+        與我們聯絡<br />
+        <a href="https://lightpickers.github.io/Frontend-Dev-React/">拾光堂</a>
+      </p>
+      <p style="color: #888; margin-top: 20px; font-size: 12px">
+        ※ 此為系統自動發送信件，請勿直接回覆。<br />
+        ※ 若有疑問，請透過網站聯繫客服人員。
+      </p>
+
+      <div class="footer">
+        拾光堂 <br />
+        &copy; Copyright@2025 拾光堂專題小組 僅供作品使用
+      </div>
+    </div>
+  </body>
+</html>

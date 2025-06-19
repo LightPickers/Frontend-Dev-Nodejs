@@ -54,14 +54,18 @@ async function postOrder(req, res, next) {
   const checkoutData = JSON.parse(checkoutDataJson);
 
   // 檢查是否已有 待付款 的相同商品訂單
-  const pendingOrder = await dataSource
+  const query = dataSource
     .getRepository("Orders")
     .createQueryBuilder("order")
     .innerJoin("Order_items", "item", "item.order_id = order.id")
     .where("order.user_id = :userId", { userId })
-    .andWhere("order.status = :status", { status: "pending" })
-    .andWhere("item.product_id IN (:...productIds)", { productIds })
-    .getOne();
+    .andWhere("order.status = :status", { status: "pending" });
+
+  if (productIds.length > 0) {
+    query.andWhere("item.product_id IN (:...productIds)", { productIds });
+  }
+
+  const pendingOrder = await query.getOne();
 
   // 有相同訂單，直接回傳藍新資料，進入藍新頁面完成付款
   if (pendingOrder) {
@@ -95,13 +99,17 @@ async function postOrder(req, res, next) {
     const couponRepo = manager.getRepository("Coupons");
 
     // 計算付款總額 totalAmount
-    const totalAmount = await cartRepo
-      .createQueryBuilder("cart")
-      .select("SUM(cart.price_at_time)", "total")
-      .where("cart.id IN (:...ids)", { ids: cart_ids })
-      .getRawOne();
+    let amount = 0;
 
-    let amount = Number(totalAmount.total) || 0;
+    if (cart_ids.length > 0) {
+      const totalAmount = await cartRepo
+        .createQueryBuilder("cart")
+        .select("SUM(cart.price_at_time)", "total")
+        .where("cart.id IN (:...ids)", { ids: cart_ids })
+        .getRawOne();
+
+      amount = Number(totalAmount.total) || 0;
+    }
 
     //建立 Order 資料
     newOrder = orderRepo.create({
