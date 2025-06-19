@@ -152,7 +152,7 @@ async function postNotify(req, res, next) {
 
     // 找出折扣
     const couponRepo = dataSource.getRepository("Coupons");
-    let discountRate = 0;
+    let discountRate = 1;
     if (order.coupon_id) {
       const coupon = await couponRepo.findOne({
         where: { id: order.coupon_id },
@@ -163,8 +163,10 @@ async function postNotify(req, res, next) {
       }
     }
     // console.log("折扣碼成功找到");
-    const subtotal = order.amount - 60;
+    const subtotal = (order.amount - 60) / (discountRate ?? 1);
     const discountAmount = Math.round(subtotal * (1 - discountRate));
+    // console.log(subtotal, discountAmount);
+    const paymenMethod = "信用卡";
 
     await orderConfirm(user.email, {
       customerName: user.name,
@@ -175,17 +177,69 @@ async function postNotify(req, res, next) {
       shippingFee: 60,
       discount: discountAmount,
       total: order.amount,
-      paymentMethod: order.payment_method,
+      // paymentMethod: order.payment_method,
+      paymenMethod: paymenMethod,
       recipientName: user.name,
       recipientPhone: user.phone,
       recipientAddress: `${user.address_zipcode} ${user.address_city} ${user.address_district} ${user.address_detail}`,
     });
     // console.log("寄信成功");
-
     logger.info(`已寄出訂單確認信給 ${user.email}`);
   } catch (emailErr) {
     logger.error("訂單完成但寄送 Email 失敗：", emailErr); // 不 return，因為付款邏輯已經成功，這只是通知信失敗
     // console.log(emailErr);
+  }
+
+  // 檢視商品是否為精選商品、最新商品 -> 直接清除快取
+  try {
+    // 結完帳強制清除首頁快取(暫時使用此方法)
+    await redis.del("homepage:latest_products:limit_6");
+    await redis.del("homepage:featured_products");
+
+    /* 先判斷，再清快取
+    // 取得該訂單商品清單
+    const orderProductRepo = dataSource.getRepository("Order_items");
+    const orderedProducts = await orderProductRepo.find({
+      where: { order_id: order.id },
+      relations: ['Products'],
+    });
+    const orderedIds = orderedProducts.map(op => op.product.id);
+
+    let newestProducts = await redis.get('homepage:latest_products:limit_6'); // cacheKey 檢查6的部分要帶入變數?
+    if (newestProducts) {
+      newestProducts = JSON.parse(newestProducts);
+    } else {
+      newestProducts = await dataSource.getRepository("Products").find({
+          where: {
+            is_sold: false,
+            is_deleted: false,
+            is_available: true,
+          },
+          relations: {
+            Conditions: true,
+          },
+          order: {
+            created_at: "DESC",
+          },
+          take: 6, // 之後改成變數
+        });
+    }
+
+    const newestIds = newestProducts.map(p => p.id);
+
+    const shouldInvalidateNewest = newestIds.some(id => orderedIds.includes(id));
+    const shouldInvalidateFeatured = orderedProducts.some(p => p.product.is_featured);
+
+    if (shouldInvalidateNewest) {
+      await redis.del('homepage:latest_products:limit_6');
+    }
+    if (shouldInvalidateFeatured) {
+      await redis.del('homepage:featured_products');
+    }
+    */
+  } catch (err) {
+    logger.warn("Redis 快取失效處理失敗：", err); // 不 throw，避免影響整個 controller
+    // console.log(err);
   }
 
   return res.status(200).send("OK");
