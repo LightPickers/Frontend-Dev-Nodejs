@@ -265,7 +265,14 @@ async function getAllOrders(req, res, next) {
   const { id: user_id } = req.user;
 
   const orders = await dataSource.getRepository("Orders").find({
-    select: ["id", "status", "payment_method", "amount", "created_at"],
+    select: [
+      "id",
+      "status",
+      "payment_method",
+      "amount",
+      "created_at",
+      "merchant_order_no",
+    ],
     where: { user_id },
     order: {
       created_at: "DESC",
