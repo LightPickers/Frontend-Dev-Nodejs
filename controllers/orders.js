@@ -79,12 +79,17 @@ async function postOrder(req, res, next) {
     });
 
     // 回傳給藍新的 htmlform
-    const { html } = generateNewebpayForm(
+    const { html, merchantOrderNo } = generateNewebpayForm(
       pendingOrder,
       product.name,
       user.email,
       cart_ids.length
     );
+
+    // 更新 pendingOrder 的 merchant_order_no 為此時的時間戳
+    pendingOrder.merchant_order_no = merchantOrderNo;
+    await dataSource.getRepository("Orders").save(pendingOrder);
+
     return res.status(200).type("html").send(html);
   }
 
