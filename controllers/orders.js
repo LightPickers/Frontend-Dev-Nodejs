@@ -353,6 +353,7 @@ async function postPendingOrder(req, res, next) {
   }
   const pendingOrder = await query.getOne();
 
+  // 判斷是否有該筆 待付款訂單
   if (!pendingOrder) {
     logger.warn(`待付款訂單 ${ERROR_MESSAGES.DATA_NOT_FOUND}`);
     return next(
