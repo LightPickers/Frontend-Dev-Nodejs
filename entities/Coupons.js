@@ -34,11 +34,11 @@ module.exports = new EntitySchema({
       nullable: false,
     },
     start_at: {
-      type: "date",
+      type: "timestamp",
       nullable: false,
     },
     end_at: {
-      type: "date",
+      type: "timestamp",
       nullable: false,
     },
     is_available: {
