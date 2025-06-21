@@ -25,8 +25,8 @@ async function postOrder(req, res, next) {
   }
 
   const cartRepo = dataSource.getRepository("Cart");
-  const usersRepo = dataSource.getRepository("Users");
-  const productsRepo = dataSource.getRepository("Products");
+  const userRepo = dataSource.getRepository("Users");
+  const productRepo = dataSource.getRepository("Products");
 
   // 從 req.body 的 cartIds 取得 productIds
   const carts = await cartRepo.find({
@@ -35,7 +35,7 @@ async function postOrder(req, res, next) {
   const productIds = carts.map((cart) => cart.product_id);
 
   // 檢查 cartIds 裡，是否有未供應的商品
-  const count = await productsRepo.count({
+  const count = await productRepo.count({
     where: {
       id: In(productIds),
       is_available: false,
@@ -69,11 +69,11 @@ async function postOrder(req, res, next) {
 
   // 有相同訂單，直接回傳藍新資料，進入藍新頁面完成付款
   if (pendingOrder) {
-    const user = await usersRepo.findOne({
+    const user = await userRepo.findOne({
       select: ["email"],
       where: { id: userId },
     });
-    const product = await productsRepo.findOne({
+    const product = await productRepo.findOne({
       select: ["name"],
       where: { id: productIds[0] },
     });
@@ -163,11 +163,11 @@ async function postOrder(req, res, next) {
   await redis.set(`order:pending:${newOrder.id}`, "pending", { EX: 1800 });
 
   // 建立 藍新金流 所需資料
-  const user = await usersRepo.findOne({
+  const user = await userRepo.findOne({
     select: ["email"],
     where: { id: userId },
   });
-  const product = await productsRepo.findOne({
+  const product = await productRepo.findOne({
     select: ["name"],
     where: { id: productIds[0] },
   });
@@ -322,9 +322,91 @@ async function getPaidOrder(req, res, next) {
   });
 }
 
+async function postPendingOrder(req, res, next) {
+  const { id: userId } = req.user;
+  const { order_id } = req.params;
+
+  const userRepo = dataSource.getRepository("Users");
+  const productRepo = dataSource.getRepository("Products");
+  const orderItemsRepo = dataSource.getRepository("Order_items");
+
+  // 取得訂單商品 product_id
+  const orderItems = await orderItemsRepo.find({
+    select: ["product_id"],
+    where: { order_id },
+  });
+
+  const productIds = orderItems
+    .map((item) => item.product_id) // 訂單項目裡 所有的 product_id
+    .filter((id) => isValidString(id) && id.length > 0);
+
+  // 查詢所有對應商品的 is_available 狀態
+  const products = await productRepo.find({
+    select: ["id", "is_available"],
+    where: { id: In(productIds) },
+  });
+
+  const unavailableProducts = products.filter(
+    (product) => !product.is_available
+  );
+  // 檢查是否有不可用商品
+  if (unavailableProducts.length > 0) {
+    const unavailableIds = unavailableProducts.map((p) => p.id);
+    logger.warn(`以下商品目前已無庫存: ${unavailableIds.join(", ")}`);
+    return next(
+      new AppError(404, `以下商品目前已無庫存: ${unavailableIds.join(", ")}`)
+    );
+  }
+
+  // 取出 待付款 商品訂單
+  const query = dataSource
+    .getRepository("Orders")
+    .createQueryBuilder("order")
+    .innerJoin("Order_items", "item", "item.order_id = order.id")
+    .where("order.user_id = :userId", { userId })
+    .andWhere("order.status = :status", { status: "pending" });
+
+  if (productIds.length > 0) {
+    query.andWhere("item.product_id IN (:...productIds)", { productIds });
+  }
+  const pendingOrder = await query.getOne();
+
+  // 判斷是否有該筆 待付款訂單
+  if (!pendingOrder) {
+    logger.warn(`待付款訂單 ${ERROR_MESSAGES.DATA_NOT_FOUND}`);
+    return next(
+      new AppError(404, `待付款訂單 ${ERROR_MESSAGES.DATA_NOT_FOUND}`)
+    );
+  }
+
+  const user = await userRepo.findOne({
+    select: ["email"],
+    where: { id: userId },
+  });
+  const product = await productRepo.findOne({
+    select: ["name"],
+    where: { id: productIds[0] },
+  });
+
+  // 回傳給藍新的 htmlform
+  const { html, merchantOrderNo } = generateNewebpayForm(
+    pendingOrder,
+    product.name,
+    user.email,
+    productIds.length
+  );
+
+  // 更新 pendingOrder 的 merchant_order_no 為此時的時間戳
+  pendingOrder.merchant_order_no = merchantOrderNo;
+  await dataSource.getRepository("Orders").save(pendingOrder);
+
+  return res.status(200).type("html").send(html);
+}
+
 module.exports = {
   postOrder,
   getOrder,
   getAllOrders,
   getPaidOrder,
+  postPendingOrder,
 };
