@@ -1,12 +1,16 @@
 # 拾光堂前台後端
 ## 專案開發環境與目錄結構介紹
-主題：《拾光堂》二手攝影器材電商平台
+### 主題
+《拾光堂》二手攝影器材電商平台
 
-創作緣由：二手攝影器材仍然具有極高的使用價值。許多保存良好的器材，因缺乏合適的流通平台被閒置或低價處理。且購買全新器材的價格高昂，在摸索攝影的過程金錢成本過高，許多人難以負擔。
+### 創作緣由
+二手攝影器材仍然具有極高的使用價值。許多保存良好的器材，因缺乏合適的流通平台被閒置或低價處理。且購買全新器材的價格高昂，在摸索攝影的過程金錢成本過高，許多人難以負擔。
 所以我們希望打造一個專門的二手攝影器材交易平台，讓器材能夠在攝影愛好者之間流轉，延續其價值。讓舊有的器材有最有效的利用。
 
-前台網址：[https://lightpickers.github.io/Frontend-Dev-React/#/](https://lightpickers.github.io/Frontend-Dev-React/#/)
-後台網址：[https://lightpickers.github.io/Manage-Dev-React/#/login](https://lightpickers.github.io/Manage-Dev-React/#/login)
+### 平台網址
+前台：[https://lightpickers.github.io/Frontend-Dev-React/#/](https://lightpickers.github.io/Frontend-Dev-React/#/)
+
+後台：[https://lightpickers.github.io/Manage-Dev-React/#/login](https://lightpickers.github.io/Manage-Dev-React/#/login)
 
 ---
 
@@ -55,21 +59,21 @@
 
 ## 安裝
 以下將會引導你如何安裝此專案到你的電腦上。
-####取得專案
+#### 取得專案
 ```bash
 git clone https://github.com/LightPickers/Frontend-Dev-Nodejs.git
 ```
-##### 移動到專案內
+#### 移動到專案內
 ```bash
 cd Frontend-Dev-Nodejs
 ```
-##### 安裝套件
+#### 安裝套件
 ```bash
 npm install
 ```
 #### 環境變數設定
 請在終端機輸入 cp .env.example .env 來複製 .env.example 檔案，並依據 .env 內容調整相關欄位。
-####運行專案
+#### 運行專案
 ```bash
 npm run start
 ```
@@ -248,26 +252,34 @@ Frontend-Dev-Nodejs/
 
 ## 關於作者
 ### 團隊成員
-##### 後端：
+###### 後端
+```bash
 姓名: Tau 
 Email: jason850629@gmail.com
 GitHub: https://github.com/TauHsu
+
 姓名: Angela
 Email: AngelaChu1598753@gmail.com
 GitHub: https://github.com/Angela-Chu
+```
 
-##### 全端：
+###### 全端
+```bash
 姓名: zxlee
 Email: napoleon.lee0114@gmail.com
 GitHub: https://github.com/zxlee0114
+
 姓名: Hsiang 
 Email: fdsa201305@gmail.com
 GitHub: https://github.com/Hsiang1006
+
 姓名：TX
 Email: wutx24@gmail.com
 GitHub: https://github.com/TXWuuu
+
 姓名: Rosa
 Email: ss91810@gmail.com
 GitHub: https://github.com/Rosaaachi
+```
 
 如果您有任何問題或建議，歡迎與我們聯繫。感謝閱讀！
