@@ -153,6 +153,13 @@ async function postOrder(req, res, next) {
       price: cart.price_at_time,
     }));
     await orderItemsRepo.save(orderItemsData);
+
+    // 清除購物車
+    const cleanCart = await cartRepo.delete({ user_id: userId });
+    if (cleanCart.affected === 0) {
+      logger.warn(`購物車${ERROR_MESSAGES.DATA_NOT_DELETE}`);
+      return next(new AppError(400, `購物車${ERROR_MESSAGES.DATA_NOT_DELETE}`));
+    }
   });
 
   // 資料確定存入新訂單後，刪除 redis 暫存
