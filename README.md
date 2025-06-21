@@ -16,17 +16,17 @@
 帳號：example1223@gmail.com
 密碼：ASSffff8972
 ```
-[x]註冊 / 登入 (平台系統、第三方登入)
-[x]會員中心：瀏覽、更改個人資訊、查看訂單狀態
-[x]忘記密碼
-[x]瀏覽商品、商品內頁的詳細內容
-[x]查詢商品時，可以使用篩選功能 (品牌、商品狀態、價格區間)
-[x]將商品加入 收藏清單、購物車
-[x]將商品從 收藏清單、購物車 刪除
-[x]結帳時輸入優惠券代碼，領取折扣
-[x]使用 藍新金流 付款
-[x]使用 AI 智能客服 詢問問題(平台相關、器材推薦)
-[x]排程 代付款的訂單超過30分鐘，會自動刪除
+- [x] 註冊 / 登入 (平台系統、第三方登入)
+- [x] 會員中心：瀏覽、更改個人資訊、查看訂單狀態
+- [x] 忘記密碼
+- [x] 瀏覽商品、商品內頁的詳細內容
+- [x] 查詢商品時，可以使用篩選功能 (品牌、商品狀態、價格區間)
+- [x] 將商品加入 收藏清單、購物車
+- [x] 將商品從 收藏清單、購物車 刪除
+- [x] 結帳時輸入優惠券代碼，領取折扣
+- [x] 使用 藍新金流 付款
+- [x] 使用 AI 智能客服 詢問問題(平台相關、器材推薦)
+- [x] 排程 代付款的訂單超過30分鐘，會自動刪除
 
 結帳資訊
 ```bash
@@ -59,15 +59,15 @@
 ```bash
 git clone https://github.com/LightPickers/Frontend-Dev-Nodejs.git
 ```
-####移動到專案內
+##### 移動到專案內
 ```bash
 cd Frontend-Dev-Nodejs
 ```
-#####安裝套件
+##### 安裝套件
 ```bash
 npm install
 ```
-####環境變數設定
+#### 環境變數設定
 請在終端機輸入 cp .env.example .env 來複製 .env.example 檔案，並依據 .env 內容調整相關欄位。
 ####運行專案
 ```bash
@@ -246,9 +246,9 @@ Frontend-Dev-Nodejs/
 
 ---
 
-##關於作者
-###團隊成員
-####後端：
+## 關於作者
+### 團隊成員
+##### 後端：
 姓名: Tau 
 Email: jason850629@gmail.com
 GitHub: https://github.com/TauHsu
@@ -256,7 +256,7 @@ GitHub: https://github.com/TauHsu
 Email: AngelaChu1598753@gmail.com
 GitHub: https://github.com/Angela-Chu
 
-####全端：
+##### 全端：
 姓名: zxlee
 Email: napoleon.lee0114@gmail.com
 GitHub: https://github.com/zxlee0114
