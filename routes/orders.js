@@ -12,5 +12,10 @@ router.get(
   auth,
   handleErrorAsync(ordersController.getPaidOrder)
 );
+router.post(
+  "/pending/:order_id",
+  auth,
+  handleErrorAsync(ordersController.postPendingOrder)
+);
 
 module.exports = router;

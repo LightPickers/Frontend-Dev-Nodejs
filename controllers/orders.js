@@ -322,9 +322,72 @@ async function getPaidOrder(req, res, next) {
   });
 }
 
+async function postPendingOrder(req, res, next) {
+  const { id: userId } = req.user;
+  const { order_id } = req.params;
+
+  const usersRepo = dataSource.getRepository("Users");
+  const productsRepo = dataSource.getRepository("Products");
+  const orderItemsRepo = dataSource.getRepository("Order_items");
+
+  // 取得訂單商品 product_id
+  const orderItems = await orderItemsRepo.find({
+    select: ["product_id"],
+    where: { order_id },
+  });
+
+  const productIds = orderItems
+    .map((item) => item.product_id) // 訂單項目裡 所有的 product_id
+    .filter((id) => isValidString(id) && id.length > 0);
+
+  // 取出 待付款 商品訂單
+  const query = dataSource
+    .getRepository("Orders")
+    .createQueryBuilder("order")
+    .innerJoin("Order_items", "item", "item.order_id = order.id")
+    .where("order.user_id = :userId", { userId })
+    .andWhere("order.status = :status", { status: "pending" });
+
+  if (productIds.length > 0) {
+    query.andWhere("item.product_id IN (:...productIds)", { productIds });
+  }
+  const pendingOrder = await query.getOne();
+
+  if (!pendingOrder) {
+    logger.warn(`待付款訂單 ${ERROR_MESSAGES.DATA_NOT_FOUND}`);
+    return next(
+      new AppError(404, `待付款訂單 ${ERROR_MESSAGES.DATA_NOT_FOUND}`)
+    );
+  }
+
+  const user = await usersRepo.findOne({
+    select: ["email"],
+    where: { id: userId },
+  });
+  const product = await productsRepo.findOne({
+    select: ["name"],
+    where: { id: productIds[0] },
+  });
+
+  // 回傳給藍新的 htmlform
+  const { html, merchantOrderNo } = generateNewebpayForm(
+    pendingOrder,
+    product.name,
+    user.email,
+    productIds.length
+  );
+
+  // 更新 pendingOrder 的 merchant_order_no 為此時的時間戳
+  pendingOrder.merchant_order_no = merchantOrderNo;
+  await dataSource.getRepository("Orders").save(pendingOrder);
+
+  return res.status(200).type("html").send(html);
+}
+
 module.exports = {
   postOrder,
   getOrder,
   getAllOrders,
   getPaidOrder,
+  postPendingOrder,
 };
