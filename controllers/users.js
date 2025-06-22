@@ -126,6 +126,7 @@ async function login(req, res, next) {
       password: true,
       role_id: true,
       photo: true,
+      is_banned: true,
     },
     where: { email },
   });
@@ -145,6 +146,14 @@ async function login(req, res, next) {
     logger.warn(ERROR_MESSAGES.USER_NOT_FOUND_OR_PASSWORD_FALSE);
     return next(
       new AppError(401, ERROR_MESSAGES.USER_NOT_FOUND_OR_PASSWORD_FALSE)
+    );
+  }
+
+  // 檢查用戶是否停權
+  if (existingUser.is_banned) {
+    logger.warn(ERROR_MESSAGES.USER_IS_BANNED);
+    return next(
+      new AppError(403, `${ERROR_MESSAGES.USER_IS_BANNED}, 請聯繫客服`)
     );
   }
 
@@ -551,12 +560,20 @@ async function verifyAuth(req, res, next) {
   });
 
   let currentUser = await dataSource.getRepository("Users").findOne({
-    select: ["id", "name"],
+    select: ["id", "name", "is_banned"],
     where: { id: decoded.id },
   });
 
   if (!currentUser) {
     return next(new AppError(401, ERROR_MESSAGES.USER_NOT_FOUND));
+  }
+
+  // 檢查用戶是否停權
+  if (currentUser.is_banned) {
+    logger.warn(ERROR_MESSAGES.USER_IS_BANNED);
+    return next(
+      new AppError(403, `${ERROR_MESSAGES.USER_IS_BANNED}, 請聯繫客服`)
+    );
   }
 
   res.status(200).json({

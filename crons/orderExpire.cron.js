@@ -7,9 +7,7 @@ const logger = require("../utils/logger")("OrderExpire.cron");
 async function cancelExpiredOrders() {
   const orderRepo = dataSource.getRepository("Orders");
   const now = new Date().toISOString();
-  const utcTime = new Date(
-    new Date(now).getTime() - 8 * 60 * 60 * 1000
-  ).toISOString();
+  // const utcTime = new Date(new Date(now).getTime() - 8 * 60 * 60 * 1000);
 
   let cursor = "0";
   do {
@@ -34,7 +32,7 @@ async function cancelExpiredOrders() {
         const order = await orderRepo.findOneBy({ id: orderId });
         if (order && order.status === "pending") {
           order.status = "canceled";
-          order.canceled_at = utcTime;
+          order.canceled_at = now;
           await orderRepo.save(order);
           logger.info(`訂單 ${orderId} 超時未付款，已自動取消`);
         }
