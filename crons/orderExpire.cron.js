@@ -7,6 +7,9 @@ const logger = require("../utils/logger")("OrderExpire.cron");
 async function cancelExpiredOrders() {
   const orderRepo = dataSource.getRepository("Orders");
   const now = new Date().toISOString();
+  const utcTime = new Date(
+    new Date(now).getTime() - 8 * 60 * 60 * 1000
+  ).toISOString();
 
   let cursor = "0";
   do {
@@ -31,7 +34,7 @@ async function cancelExpiredOrders() {
         const order = await orderRepo.findOneBy({ id: orderId });
         if (order && order.status === "pending") {
           order.status = "canceled";
-          order.canceled_at = now;
+          order.canceled_at = utcTime;
           await orderRepo.save(order);
           logger.info(`訂單 ${orderId} 超時未付款，已自動取消`);
         }
@@ -45,7 +48,9 @@ async function fallbackCancelExpiredOrders() {
 
   // 取得 30 分鐘前的時間
   const now = new Date().toISOString();
-  const cutoffTime = new Date(new Date(now) - 30 * 60 * 1000).toISOString(); // 30 分鐘前
+  const cutoffTime = new Date(
+    new Date(now).getTime() - 30 * 60 * 1000
+  ).toISOString(); // 30 分鐘前
 
   const expiredOrders = await orderRepo.find({
     where: {
@@ -62,8 +67,8 @@ async function fallbackCancelExpiredOrders() {
   }
 }
 
-// 每 10 分鐘執行一次
-cron.schedule("*/10 * * * *", async () => {
+// 每 1 分鐘執行一次
+cron.schedule("* * * * *", async () => {
   try {
     if (isRedisConnected()) {
       logger.info("每 10 分鐘使用 Redis 排程 檢查是否有過期訂單");
