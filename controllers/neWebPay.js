@@ -74,8 +74,9 @@ async function postNotify(req, res, next) {
       const paymentRepo = manager.getRepository("Payments");
 
       // 換算付款時間為 UTC 時區
+      const payTime = new Date(result.PayTime).toISOString;
       const utcPayTime = new Date(
-        new Date(result.PayTime).getTime() - 8 * 60 * 60 * 1000
+        new Date(payTime).getTime() - 8 * 60 * 60 * 1000
       ).toISOString();
 
       const newPayment = paymentRepo.create({
