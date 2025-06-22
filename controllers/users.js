@@ -39,7 +39,7 @@ async function signup(req, res, next) {
     // 從資料庫取得 使用者的 資料id
     const roleUser = await dataSource
       .getRepository("Roles")
-      .findOneBy({ name: "使用者" });
+      .findOneBy({ name: "user" });
 
     const userData = {
       ...req.body,
