@@ -73,18 +73,12 @@ async function postNotify(req, res, next) {
       // 建立付款紀錄 payment
       const paymentRepo = manager.getRepository("Payments");
 
-      // 換算付款時間為 UTC 時區
-      const payTime = new Date(result.PayTime).toISOString;
-      const utcPayTime = new Date(
-        new Date(payTime).getTime() - 8 * 60 * 60 * 1000
-      ).toISOString();
-
       const newPayment = paymentRepo.create({
         order_id: order.id,
         user_id: order.user_id,
         transaction_id: result.TradeNo,
         status: "payment_success",
-        paid_at: utcPayTime,
+        paid_at: result.PayTime,
       });
       await paymentRepo.save(newPayment);
 
