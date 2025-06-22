@@ -26,7 +26,7 @@ passport.use(
 
         // 如果使用者不存在，則建立一個新帳號
         if (!user) {
-          const role = await roleRepo.findOneBy({ name: "使用者" });
+          const role = await roleRepo.findOneBy({ name: "user" });
           user = userRepo.create({
             googleId: profile.id,
             name: profile.displayName,
