@@ -356,12 +356,13 @@ async function postPendingOrder(req, res, next) {
   const unavailableProducts = products.filter(
     (product) => !product.is_available
   );
+
   // 檢查是否有不可用商品
   if (unavailableProducts.length > 0) {
     const unavailableIds = unavailableProducts.map((p) => p.id);
     logger.warn(`以下商品目前已無庫存: ${unavailableIds.join(", ")}`);
     return next(
-      new AppError(404, `以下商品目前已無庫存: ${unavailableIds.join(", ")}`)
+      new AppError(400, `以下商品目前已無庫存: ${unavailableIds.join(", ")}`)
     );
   }
 
