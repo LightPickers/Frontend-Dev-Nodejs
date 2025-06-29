@@ -65,14 +65,14 @@ async function fallbackCancelExpiredOrders() {
   }
 }
 
-// 每 1 分鐘執行一次
-cron.schedule("* * * * *", async () => {
+// 每 20 分鐘執行一次
+cron.schedule("*/20 * * * *", async () => {
   try {
     if (isRedisConnected()) {
-      logger.info("每 10 分鐘使用 Redis 排程 檢查是否有過期訂單");
+      logger.info("每 20 分鐘使用 Redis 排程 檢查是否有過期訂單");
       await cancelExpiredOrders();
     } else {
-      logger.info("[資料庫備援] 每 10 分鐘檢查是否有過期訂單");
+      logger.info("[資料庫備援] 每 20 分鐘檢查是否有過期訂單");
       await fallbackCancelExpiredOrders();
     }
   } catch (err) {
