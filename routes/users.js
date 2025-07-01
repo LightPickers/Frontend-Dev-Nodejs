@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const usersController = require("../controllers/users");
-const auth = require("../middlewares/auth");
+const { auth } = require("../middlewares/auth");
 const handleErrorAsync = require("../utils/handleErrorAsync");
 const savedList = require("../controllers/savedList"); // 收藏資料相關功能
 
