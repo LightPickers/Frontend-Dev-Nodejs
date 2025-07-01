@@ -35,8 +35,9 @@ const ERROR_MESSAGES = {
   DATA_ALREADY_USED: "資料已被使用",
   DATA_NOT_DELETE: "資料未刪除",
   DATA_NOT_AVAILABLE: "資料未供應",
+  DATA_NOT_CHANGE: "資料未改變",
   REDIS_WRITE_FAILED: "Redis 寫入失敗",
-  REDIS_FAILED_TO_PROCESS_CHECKOUT: "Redis暫時無法處理結帳資訊",
+  REDIS_FAILED_TO_PROCESS_CHECKOUT: "Redis 暫時無法處理結帳資訊",
   ID_NOT_RULE: "ID 格式錯誤",
   ID_NOT_FOUND: "ID 不存在",
   DATA_NOT_POSITIVE: "需為正整數",
@@ -62,6 +63,10 @@ const ERROR_MESSAGES = {
   EMAIL_FIELD: "缺少必要欄位（to、orderNumber 或 products）",
   EMAIL_PRODUCT:
     "商品清單中有項目格式不正確（需包含 name、quantity、price 且型別正確）",
+  REVIEWS_PHOTO_URL_INCORRECT: "評論圖片網址未填寫正確",
+  REVIEWS_SCORE_NOT_RULE: "評論分數必須在 1~5 之間",
+  REVIEWS_ALREADY_EXIST: "該用戶已評論過此商品",
+  REVIEW_LIKES_ALREADY_EXIST: "該用戶已按讚此評論",
 };
 
 module.exports = ERROR_MESSAGES;
