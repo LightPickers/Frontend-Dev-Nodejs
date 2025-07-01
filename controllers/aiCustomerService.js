@@ -2,6 +2,7 @@ const { dataSource } = require("../db/data-source");
 const openai = require("../services/openaiService");
 const logger = require("../utils/logger")("aiCustomerServiceController");
 const countTokens = require("../utils/aiCustomerService/tokenCounter");
+const extractKeywords = require("../utils/aiCustomerService/extractKeyword");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 const BANNED_WORDS = require("../utils/aiCustomerService/bannedWords");
@@ -59,7 +60,39 @@ async function postAiCustomerService(req, res, next) {
     })
   );
 
-  // 取得 所有歷史訊息 組成 conversationHistory，且限制 token 總數
+  // 商品關鍵字查詢邏輯
+  const keyword = extractKeywords(message);
+  const productRepo = dataSource.getRepository("Products");
+
+  let productInfo = "";
+  if (keyword) {
+    const products = await productRepo
+      .createQueryBuilder("product")
+      .where("product.title LIKE :keyword OR product.subtitle LIKE :keyword", {
+        keyword: `%${keyword}%`,
+      })
+      .andWhere("product.is_available = :isAvailable", { isAvailable: true })
+      .limit(3)
+      .getMany();
+
+    if (products.length > 0) {
+      productInfo = products
+        .map(
+          (p, i) =>
+            `${i + 1}. ${
+              p.name
+            }\nhttps://lightpickers.github.io/Frontend-Dev-React/#/products/${
+              p.id
+            }`
+        )
+        .join("\n\n");
+    } else {
+      productInfo = "目前沒有找到相關商品。";
+    }
+  }
+
+  /*
+  // 組合對話歷史 conversationHistory，且限制 token 總數
   const allMessages = await messageRepo.find({
     where: { conversation_id: conversation.id },
     order: { sent_at: "ASC" },
@@ -83,39 +116,38 @@ async function postAiCustomerService(req, res, next) {
   }
   // 整理出在 token 數以內的訊息
   const trimmedHistory = limitedMessages.join("\n");
+  */
 
-  const systemPrompt =
-    "你是拾光堂的專業客服，以文藝、親切的風格專門回答顧客有關時光堂的問題，也回答與攝影器材購物相關的問題。";
+  //console.log("推薦商品：", productInfo);
 
-  // 呼叫 fine-tuned 模型
-  let responseText = "很抱歉，我目前無法提供回覆。";
+  // 組合完整 prompt，將商品資訊與對話歷史一起帶入
+  const systemContent = `你是拾光堂的專業客服，以文藝、親切的風格回答顧客的問題，並推薦相關攝影器材。`;
+  const userContent = `使用者訊息如下：${message}以下是根據訊息找到的推薦商品清單：${productInfo}請根據以上在拾光堂商品資訊與用戶訊息，給予用戶商品名稱和商品連結且親切的回覆。沒有找到相關的商品就不推薦。`;
 
-  try {
-    const response = await openai.responses.create({
-      model: "ft:gpt-3.5-turbo-1106:tau::BjPv8re3",
-      instructions: systemPrompt,
-      input: trimmedHistory,
-    });
+  const response = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages: [
+      { role: "system", content: systemContent },
+      { role: "user", content: userContent },
+    ],
+  });
 
-    // 取得回應內容
-    responseText = response.output_text?.trim() || responseText;
-  } catch (error) {
-    logger.error("OpenAI 回應錯誤", error);
-  }
+  // 取得回應內容
+  const assistantReply = response.choices[0].message.content;
 
   // 儲存 AI 客服回應到資料庫
   await messageRepo.save(
     messageRepo.create({
       conversation_id: conversation.id,
       role: "assistant",
-      content: responseText,
+      content: assistantReply,
       sent_at: new Date(),
     })
   );
 
   // 回傳結果
   res.json({
-    response: responseText,
+    response: assistantReply,
     user_id,
   });
 }

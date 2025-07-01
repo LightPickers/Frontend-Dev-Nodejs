@@ -1,6 +1,6 @@
 const express = require("express");
 const uploadController = require("../controllers/upload");
-const auth = require("../middlewares/auth");
+const { auth } = require("../middlewares/auth");
 const upload = require("../middlewares/uploadImages");
 const handleErrorAsync = require("../utils/handleErrorAsync");
 
