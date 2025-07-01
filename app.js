@@ -3,7 +3,7 @@ const path = require("path");
 const cors = require("cors");
 const pinoHttp = require("pino-http");
 const logger = require("./utils/logger")("App");
-require("./crons/orderExpire.cron.js");
+// require("./crons/orderExpire.cron.js");
 
 const usersRouter = require("./routes/users");
 const emailRouter = require("./routes/email");
@@ -19,6 +19,7 @@ const categoryRouter = require("./routes/category.js");
 const uploadRouter = require("./routes/upload");
 const healthRouter = require("./routes/health.js");
 const aiCustomerServiceRouter = require("./routes/aiCustomerService.js");
+const reviewsRouter = require("./routes/reviews.js");
 
 const app = express();
 app.use(cors());
@@ -51,6 +52,7 @@ app.use("/api/v1/category", categoryRouter);
 app.use("/api/v1/upload/image", uploadRouter);
 app.use("/api/v1/health", healthRouter);
 app.use("/api/v1/aiCustomerService", aiCustomerServiceRouter);
+app.use("/api/v1/reviews", reviewsRouter);
 
 //404
 app.use((req, res, next) => {
