@@ -100,5 +100,10 @@ module.exports = new EntitySchema({
       type: "one-to-many",
       inverseSide: "Users",
     },
+    Reviews: {
+      target: "Reviews",
+      type: "one-to-many",
+      inverseSide: "Users",
+    },
   },
 });

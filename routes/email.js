@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const emailController = require("../controllers/email");
-const auth = require("../middlewares/auth");
+const { auth } = require("../middlewares/auth");
 const handleErrorAsync = require("../utils/handleErrorAsync");
 
 router.post(

@@ -59,4 +59,31 @@ async function auth(req, res, next) {
   }
 }
 
-module.exports = auth;
+/**
+ * 驗證使用者是否為管理員的中間件
+ * 必須在 isAuth 中間件之後使用
+ */
+const isAdmin = async (req, res, next) => {
+  const admin = await dataSource.getRepository("Roles").findOne({
+    select: ["id"],
+    where: { name: "admin" },
+  });
+
+  const { id: user_id } = req.user;
+  const user = await dataSource.getRepository("Users").findOne({
+    select: ["role_id"],
+    where: { id: user_id },
+  });
+
+  if (req.user && user.role_id === admin.id) {
+    next();
+  } else {
+    logger.warn("非管理員嘗試訪問管理員權限路由");
+    return next(new AppError(403, "您無權限訪問此資源"));
+  }
+};
+
+module.exports = {
+  auth,
+  isAdmin,
+};
