@@ -11,7 +11,7 @@ router.post(
   handleErrorAsync(reviewsController.postReviews)
 );
 // 68.取得評論列表
-router.get("/", auth, handleErrorAsync(reviewsController.getReviews));
+router.get("/", handleErrorAsync(reviewsController.getReviews));
 // 69.修改商品評論
 router.put("/:review_id", auth, handleErrorAsync(reviewsController.putReviews));
 // 70.新增商品評論讚
