@@ -25,11 +25,6 @@ module.exports = new EntitySchema({
       type: "text",
       nullable: false,
     },
-    image: {
-      type: "varchar",
-      length: 2048,
-      nullable: true,
-    },
     reply: {
       type: "text",
       nullable: true,

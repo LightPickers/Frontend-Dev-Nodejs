@@ -17,6 +17,7 @@ const Product_images = require("../entities/Product_images");
 const Conversations = require("../entities/Conversations");
 const Messages = require("../entities/Messages");
 const Reviews = require("../entities/Reviews");
+const Review_images = require("../entities/Review_images");
 const Review_likes = require("../entities/Review_likes");
 
 const dataSource = new DataSource({
@@ -45,6 +46,7 @@ const dataSource = new DataSource({
     Conversations,
     Messages,
     Reviews,
+    Review_images,
     Review_likes,
   ],
   ssl: config.get("db.ssl"),
