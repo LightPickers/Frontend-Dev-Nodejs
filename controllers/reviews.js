@@ -4,6 +4,7 @@ const {
   isUndefined,
   isValidString,
   isValidUrl,
+  isValidArrayOfURL,
 } = require("../utils/validUtils");
 const { validateFields } = require("../utils/validateFields");
 const { isUUID } = require("validator");
@@ -14,6 +15,7 @@ const {
   REVIEWS_REPLY_RULE,
 } = require("../utils/validateRules");
 const isReviewDataUnchanged = require("../utils/reviewDataUnchange");
+const _ = require("lodash");
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 
@@ -21,7 +23,7 @@ const ERROR_MESSAGES = require("../utils/errorMessages");
 async function postReviews(req, res, next) {
   const { id: user_id } = req.user;
   const { product_id } = req.params;
-  const { rating, comment, image } = req.body;
+  const { rating, comment, images } = req.body;
 
   // 驗證欄位
   const errorFields = validateFields(
@@ -37,6 +39,7 @@ async function postReviews(req, res, next) {
     return next(new AppError(400, errorMessages));
   }
 
+  // 評分只能在 1~5分 之間
   if (rating < 1 || rating > 5) {
     logger.warn(ERROR_MESSAGES.REVIEWS_SCORE_NOT_RULE);
     return next(new AppError(400, ERROR_MESSAGES.REVIEWS_SCORE_NOT_RULE));
@@ -57,36 +60,154 @@ async function postReviews(req, res, next) {
     return next(new AppError(400, ERROR_MESSAGES.REVIEWS_ALREADY_EXIST));
   }
 
-  // 建立 reviewData
-  const reviewData = { user_id, product_id, rating, comment };
+  // 將 Review 資料存入 db
+  const newReview = reviewRepo.create({ user_id, product_id, rating, comment });
+  const savedReview = await reviewRepo.save(newReview);
 
   // 如果有 image 有值
-  if (image) {
+  if (images) {
     // 驗證 image URL 格式是否正確
-    if (!isValidUrl(image)) {
+    if (!isValidArrayOfURL(images)) {
       logger.warn(ERROR_MESSAGES.REVIEWS_PHOTO_URL_INCORRECT);
       return next(
         new AppError(400, ERROR_MESSAGES.REVIEWS_PHOTO_URL_INCORRECT)
       );
     }
 
-    // 更新 reviewData
-    reviewData.image = image;
-  }
+    // images 是否超過 3 張
+    if (images.length > 3) {
+      logger.warn(ERROR_MESSAGES.REVIEWS_PHOTO_NOT_MORE_THAN_THREE);
+      return next(
+        new AppError(400, ERROR_MESSAGES.REVIEWS_PHOTO_NOT_MORE_THAN_THREE)
+      );
+    }
 
-  // 將 newReview 存入 db
-  const newReview = reviewRepo.create(reviewData);
-  await reviewRepo.save(newReview);
+    // 將 review images 存入
+    const reviewImagesRepo = dataSource.getRepository("Review_images");
+    const newReviewImages = images.map((imageUrl) =>
+      reviewImagesRepo.create({
+        review_id: savedReview.id,
+        image: imageUrl,
+      })
+    );
+    await reviewImagesRepo.save(newReviewImages);
+  }
 
   return res.status(201).json({
     status: true,
     message: "商品評論新增成功",
-    data: { newReview },
+  });
+}
+
+// 69.修改商品評論
+async function putReviews(req, res, next) {
+  const { review_id } = req.params;
+  const { rating, comment, images } = req.body;
+
+  // 驗證欄位
+  const errorFields = validateFields(
+    {
+      rating,
+      comment,
+    },
+    REVIEWS_RULE
+  );
+  if (errorFields) {
+    const errorMessages = errorFields.join(", ");
+    logger.warn(errorMessages);
+    return next(new AppError(400, errorMessages));
+  }
+
+  // 評分只能在 1~5分 之間
+  if (rating < 1 || rating > 5) {
+    logger.warn(ERROR_MESSAGES.REVIEWS_SCORE_NOT_RULE);
+    return next(new AppError(400, ERROR_MESSAGES.REVIEWS_SCORE_NOT_RULE));
+  }
+
+  if (!isUUID(review_id)) {
+    logger.warn(`Review ID ${ERROR_MESSAGES.FIELDS_INCORRECT}`);
+    return next(
+      new AppError(400, `Review ID ${ERROR_MESSAGES.FIELDS_INCORRECT}`)
+    );
+  }
+
+  // 如果有 images 有值
+  if (images) {
+    // 驗證 image URL 格式是否正確
+    if (!isValidArrayOfURL(images)) {
+      logger.warn(ERROR_MESSAGES.REVIEWS_PHOTO_URL_INCORRECT);
+      return next(
+        new AppError(400, ERROR_MESSAGES.REVIEWS_PHOTO_URL_INCORRECT)
+      );
+    }
+
+    // images 是否超過 3 張
+    if (images.length > 3) {
+      logger.warn(ERROR_MESSAGES.REVIEWS_PHOTO_NOT_MORE_THAN_THREE);
+      return next(
+        new AppError(400, ERROR_MESSAGES.REVIEWS_PHOTO_NOT_MORE_THAN_THREE)
+      );
+    }
+  }
+
+  const reviewRepo = dataSource.getRepository("Reviews");
+  const review = await reviewRepo.findOneBy({ id: review_id });
+
+  // 檢查是否有該筆評論
+  if (!review) {
+    logger.warn(`評論 ${ERROR_MESSAGES.DATA_NOT_FOUND}`);
+    return next(new AppError(404, `評論 ${ERROR_MESSAGES.DATA_NOT_FOUND}`));
+  }
+
+  const reviewImagesRepo = dataSource.getRepository("Review_images");
+  const reviewImages = await reviewImagesRepo.find({ where: { review_id } });
+  const reviewImageUrls = reviewImages.map((item) => item.image.trim());
+
+  // 檢查資料是否有改變
+  if (
+    isReviewDataUnchanged(review, { rating, comment }, reviewImageUrls, images)
+  ) {
+    logger.warn(`評論 ${ERROR_MESSAGES.DATA_NOT_CHANGE}`);
+    return next(new AppError(400, `評論 ${ERROR_MESSAGES.DATA_NOT_CHANGE}`));
+  }
+
+  // 更新評論資料
+  const updateResult = await reviewRepo.update(
+    { id: review_id },
+    { rating, comment }
+  );
+
+  // 檢查資料是否有更新
+  if (updateResult.affected === 0) {
+    logger.warn(`評論 ${ERROR_MESSAGES.DATA_UPDATE_FAILED}`);
+    return next(new AppError(400, `評論 ${ERROR_MESSAGES.DATA_UPDATE_FAILED}`));
+  }
+
+  // 如果圖片不同，先刪除舊圖片後，再加上新圖片
+  const dbImages = reviewImages.map((obj) => obj.image.trim()).sort();
+  const requestImages = images.map((img) => img.trim()).sort();
+
+  if (!_.isEqual(dbImages, requestImages)) {
+    const reviewImagesRepo = dataSource.getRepository("Review_images");
+    await reviewImagesRepo.delete({ review_id });
+
+    if (requestImages.length > 0) {
+      const newReviewImages = requestImages.map((imageUrl) =>
+        reviewImagesRepo.create({ review_id, image: imageUrl })
+      );
+      await reviewImagesRepo.save(newReviewImages);
+    }
+  }
+
+  return res.status(200).json({
+    status: true,
+    message: "商品評論修改成功",
   });
 }
 
 // 68.取得評論列表
 async function getReviews(req, res, next) {
+  const { id: user_id } = req.user;
   const { page, per, name, keyword, sort } = req.query;
 
   // 解析排序參數
@@ -160,19 +281,28 @@ async function getReviews(req, res, next) {
     .createQueryBuilder("reviews")
     .leftJoinAndSelect("reviews.Users", "user")
     .leftJoinAndSelect("reviews.Products", "product")
+    .leftJoin(
+      "Review_likes",
+      "likes",
+      "likes.review_id = reviews.id AND likes.user_id = :user_id",
+      { user_id }
+    )
     .select([
       "reviews.id",
       "reviews.rating",
       "reviews.comment",
       "reviews.reply",
       "reviews.likes_count",
-      "reviews.image",
       "reviews.is_deleted",
       "reviews.created_at",
       "user.photo",
       "user.email",
       "product.name",
     ])
+    .addSelect(
+      "CASE WHEN likes.id IS NOT NULL THEN true ELSE false END",
+      "reviews_is_liked"
+    )
     .orderBy(orderField, orderDirection)
     .skip(skip)
     .take(perNumber);
@@ -204,11 +334,17 @@ async function getReviews(req, res, next) {
     }
   }
 
+  // 將 reviews_is_liked 加回每筆結果中
+  const rawReviews = await queryBuilder.getRawAndEntities();
+  const reviews = rawReviews.entities.map((review, index) => {
+    return {
+      ...review,
+      is_liked: rawReviews.raw[index]["reviews_is_liked"],
+    };
+  });
+
   // 取出 搜尋的 Reviews 和 搜尋筆數
-  const [reviews, totalReviews] = await Promise.all([
-    queryBuilder.getMany(),
-    queryBuilder.getCount(),
-  ]);
+  const totalReviews = await queryBuilder.getCount();
 
   // 計算 總頁數
   const totalPages = Math.ceil(totalReviews / perNumber);
@@ -224,29 +360,10 @@ async function getReviews(req, res, next) {
   });
 }
 
-// 69.修改商品評論
-async function putReviews(req, res, next) {
+// 75.取得評論詳細資料
+async function getReviewsDetail(req, res, next) {
+  const { id: user_id } = req.user;
   const { review_id } = req.params;
-  const { rating, comment, image } = req.body;
-
-  // 驗證欄位
-  const errorFields = validateFields(
-    {
-      rating,
-      comment,
-    },
-    REVIEWS_RULE
-  );
-  if (errorFields) {
-    const errorMessages = errorFields.join(", ");
-    logger.warn(errorMessages);
-    return next(new AppError(400, errorMessages));
-  }
-
-  if (rating < 1 || rating > 5) {
-    logger.warn(ERROR_MESSAGES.REVIEWS_SCORE_NOT_RULE);
-    return next(new AppError(400, ERROR_MESSAGES.REVIEWS_SCORE_NOT_RULE));
-  }
 
   if (!isUUID(review_id)) {
     logger.warn(`Review ID ${ERROR_MESSAGES.FIELDS_INCORRECT}`);
@@ -255,19 +372,29 @@ async function putReviews(req, res, next) {
     );
   }
 
-  // 如果有 image 有值
-  if (image) {
-    // 驗證 image URL 格式是否正確
-    if (!isValidUrl(image)) {
-      logger.warn(ERROR_MESSAGES.REVIEWS_PHOTO_URL_INCORRECT);
-      return next(
-        new AppError(400, ERROR_MESSAGES.REVIEWS_PHOTO_URL_INCORRECT)
-      );
-    }
-  }
-
-  const reviewRepo = dataSource.getRepository("Reviews");
-  const review = await reviewRepo.findOneBy({ id: review_id });
+  const review = await dataSource.getRepository("Reviews").findOne({
+    select: {
+      id: true,
+      rating: true,
+      comment: true,
+      reply: true,
+      likes_count: true,
+      is_deleted: true,
+      created_at: true,
+      Users: {
+        photo: true,
+        email: true,
+      },
+      Products: {
+        name: true,
+      },
+    },
+    where: { id: review_id },
+    relations: {
+      Users: true,
+      Products: true,
+    },
+  });
 
   // 檢查是否有該筆評論
   if (!review) {
@@ -275,30 +402,29 @@ async function putReviews(req, res, next) {
     return next(new AppError(404, `評論 ${ERROR_MESSAGES.DATA_NOT_FOUND}`));
   }
 
-  // 檢查資料是否有改變
-  if (isReviewDataUnchanged(review, { rating, comment, image })) {
-    logger.warn(`評論 ${ERROR_MESSAGES.DATA_NOT_CHANGE}`);
-    return next(new AppError(400, `評論 ${ERROR_MESSAGES.DATA_NOT_CHANGE}`));
+  // 取得評論照片
+  const reviewImages = await dataSource.getRepository("Review_images").find({
+    select: ["image"],
+    where: { review_id },
+  });
+  const reviewImagesUrl = reviewImages.map((item) => item.image);
+
+  // 檢查用戶是否已按讚此評論
+  let is_liked = false;
+  const reviewLikeRepo = dataSource.getRepository("Review_likes");
+  const reviewLike = await reviewLikeRepo.findOneBy({ user_id, review_id });
+  if (reviewLike) {
+    is_liked = true;
   }
-
-  // 更新評論資料
-  const updateResult = await reviewRepo.update(
-    { id: review_id },
-    { rating, comment, image }
-  );
-
-  // 檢查資料是否有更新
-  if (updateResult.affected === 0) {
-    logger.warn(`評論 ${ERROR_MESSAGES.DATA_UPDATE_FAILED}`);
-    return next(new AppError(400, `評論 ${ERROR_MESSAGES.DATA_UPDATE_FAILED}`));
-  }
-
-  const result = await reviewRepo.findOneBy({ id: review_id });
 
   return res.status(200).json({
     status: true,
-    message: "商品評論修改成功",
-    data: { result },
+    message: "商品評論取得成功",
+    data: {
+      review,
+      reviewImagesUrl,
+      is_liked,
+    },
   });
 }
 
@@ -550,6 +676,7 @@ async function deleteReviews(req, res, next) {
 module.exports = {
   postReviews,
   getReviews,
+  getReviewsDetail,
   putReviews,
   postReviewsLike,
   deleteReviewsLike,
