@@ -643,7 +643,7 @@ async function deleteReviews(req, res, next) {
     !isValidString(review_id) ||
     !isUUID(review_id)
   ) {
-    logger.warn(`評論 ID ${ERROR_MESSAGES.FIELDS_INCORRECT}`);
+    logger.warn(`Review ID ${ERROR_MESSAGES.FIELDS_INCORRECT}`);
     return next(new AppError(400, ERROR_MESSAGES.FIELDS_INCORRECT));
   }
 
@@ -667,7 +667,7 @@ async function deleteReviews(req, res, next) {
     return next(new AppError(400, `評論 ${ERROR_MESSAGES.DATA_NOT_DELETE}`));
   }
 
-  return res.status(201).json({
+  return res.status(200).json({
     status: true,
     message: "評論刪除成功",
   });
