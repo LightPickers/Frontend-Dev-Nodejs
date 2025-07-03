@@ -78,12 +78,8 @@ async function postAiCustomerService(req, res, next) {
     if (products.length > 0) {
       productInfo = products
         .map(
-          (p, i) =>
-            `${i + 1}. ${
-              p.name
-            }\nhttps://lightpickers.github.io/Frontend-Dev-React/#/products/${
-              p.id
-            }\n${p.primary_image}`
+          (p) =>
+            `[![${p.name}](${p.primary_image})](https://lightpickers.github.io/Frontend-Dev-React/#/products/${p.id})`
         )
         .join("\n\n");
     } else {
@@ -118,11 +114,11 @@ async function postAiCustomerService(req, res, next) {
   const trimmedHistory = limitedMessages.join("\n");
   */
 
-  //console.log("推薦商品：", productInfo);
+  console.log("推薦商品：", productInfo);
 
   // 組合完整 prompt，將商品資訊與對話歷史一起帶入
   const systemContent = `你是拾光堂的專業客服，以文藝、親切的風格回答顧客的問題，並推薦相關攝影器材。`;
-  const userContent = `使用者訊息如下：${message}以下是根據訊息找到的推薦商品清單：${productInfo}請根據以上在拾光堂商品資訊與用戶訊息，給予用戶商品名稱、連結和圖片且親切的回覆。沒有找到相關的商品就不推薦。`;
+  const userContent = `使用者訊息如下：${message}以下是根據訊息找到的推薦商品清單：請根據拾光堂的商品資訊${productInfo}，針對用戶的訊息推薦相關商品。每項推薦提供「名稱」「primary_image是商品頁面超連結」，並附上一句簡短介紹。若${productInfo}裡沒有，就不推薦。在結尾，請以親切的語氣引導用戶點擊圖片前往商品頁面。`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
