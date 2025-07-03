@@ -64,16 +64,30 @@ async function postAiCustomerService(req, res, next) {
   const keyword = extractKeywords(message);
   const productRepo = dataSource.getRepository("Products");
 
+  // console.log(keyword);
+
   let productInfo = "";
-  if (keyword) {
-    const products = await productRepo
-      .createQueryBuilder("product")
-      .where("product.title LIKE :keyword OR product.subtitle LIKE :keyword", {
-        keyword: `%${keyword}%`,
-      })
-      .andWhere("product.is_available = :isAvailable", { isAvailable: true })
-      .limit(3)
-      .getMany();
+  if (keyword && keyword.length > 0) {
+    const queryBuilder = productRepo.createQueryBuilder("product");
+
+    // 如果 keyword 多筆，用 foreach 逐一查詢
+    keyword.forEach((word, index) => {
+      const param = `keyword${index}`;
+      const condition = `(product.title LIKE :${param} OR product.subtitle LIKE :${param})`;
+      if (index === 0) {
+        queryBuilder.where(condition, { [param]: `%${word}%` });
+      } else {
+        queryBuilder.orWhere(condition, { [param]: `%${word}%` });
+      }
+    });
+
+    // 過濾下架商品
+    queryBuilder.andWhere("product.is_available = :isAvailable", {
+      isAvailable: true,
+    });
+    queryBuilder.limit(3);
+
+    const products = await queryBuilder.getMany();
 
     if (products.length > 0) {
       productInfo = products
@@ -114,11 +128,11 @@ async function postAiCustomerService(req, res, next) {
   const trimmedHistory = limitedMessages.join("\n");
   */
 
-  console.log("推薦商品：", productInfo);
+  // console.log("推薦商品：", productInfo);
 
   // 組合完整 prompt，將商品資訊與對話歷史一起帶入
   const systemContent = `你是拾光堂的專業客服，以文藝、親切的風格回答顧客的問題，並推薦相關攝影器材。`;
-  const userContent = `使用者訊息如下：${message}以下是根據訊息找到的推薦商品清單(格式為 Markdown 圖片連結)：請根據拾光堂商品${productInfo}的資訊、格式，針對用戶訊息推薦商品。每項推薦提供名稱、「商品圖是lightpickers商品頁面超連結的格式」，並附上一句簡短介紹。若${productInfo}裡沒有，就不推薦。在結尾，請以親切的語氣引導用戶點擊圖片前往商品頁面。`;
+  const userContent = `使用者訊息如下：${message}以下是根據訊息找到的推薦商品清單(格式為 Markdown 圖片連結)：請根據拾光堂商品${productInfo}的資訊、格式，針對用戶訊息推薦商品。每項推薦提供名稱、「商品圖是lightpickers商品頁面超連結的格式」，並附上一句符合用戶訊息的簡短介紹。若${productInfo}裡沒有，就不推薦。在結尾，請以親切的語氣引導用戶點擊圖片前往商品頁。`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",

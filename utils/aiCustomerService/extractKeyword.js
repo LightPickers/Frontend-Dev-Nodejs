@@ -1,6 +1,7 @@
 function extractKeywords(message) {
   const keywordCandidates = [
     // 品牌 關鍵字
+    "Leica",
     "Sony",
     "Canon",
     "Fujifilm",
@@ -15,6 +16,12 @@ function extractKeywords(message) {
     "相機",
     "機身",
     "鏡頭",
+    "閃光燈",
+    "電池",
+    "電池手把",
+    "收音",
+    "麥克風",
+    "轉接器",
     // 相機類型 關鍵字
     "單眼",
     "類單眼",
@@ -22,12 +29,16 @@ function extractKeywords(message) {
     "單反",
     "雙反",
     "旁軸",
-    "閃光燈",
-    "電池",
-    "電池手把",
-    "轉接器",
     "底片",
     "數位",
+    "單眼相機",
+    "類單眼相機",
+    "無反相機",
+    "單反相機",
+    "雙反相機",
+    "旁軸相機",
+    "底片相機",
+    "數位相機",
     // 鏡頭 關鍵字
     "可換鏡頭",
     "固定鏡頭",
@@ -45,6 +56,8 @@ function extractKeywords(message) {
     "微型",
     "全片幅",
     "中片幅",
+    "全片幅相機",
+    "中片幅相機",
     // 光圈
     "大光圈",
     "淺景深",
@@ -57,6 +70,7 @@ function extractKeywords(message) {
     "影音",
     "Vlog",
     "防水",
+    "經典",
     "復古",
     // 規格
     "4k",
