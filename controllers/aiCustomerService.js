@@ -83,7 +83,7 @@ async function postAiCustomerService(req, res, next) {
               p.name
             }\nhttps://lightpickers.github.io/Frontend-Dev-React/#/products/${
               p.id
-            }`
+            }\n${p.primary_image}`
         )
         .join("\n\n");
     } else {
@@ -122,7 +122,7 @@ async function postAiCustomerService(req, res, next) {
 
   // 組合完整 prompt，將商品資訊與對話歷史一起帶入
   const systemContent = `你是拾光堂的專業客服，以文藝、親切的風格回答顧客的問題，並推薦相關攝影器材。`;
-  const userContent = `使用者訊息如下：${message}以下是根據訊息找到的推薦商品清單：${productInfo}請根據以上在拾光堂商品資訊與用戶訊息，給予用戶商品名稱和商品連結且親切的回覆。沒有找到相關的商品就不推薦。`;
+  const userContent = `使用者訊息如下：${message}以下是根據訊息找到的推薦商品清單：${productInfo}請根據以上在拾光堂商品資訊與用戶訊息，給予用戶商品名稱、連結和圖片且親切的回覆。沒有找到相關的商品就不推薦。`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
@@ -130,6 +130,7 @@ async function postAiCustomerService(req, res, next) {
       { role: "system", content: systemContent },
       { role: "user", content: userContent },
     ],
+    temperature: 0.7,
   });
 
   // 取得回應內容

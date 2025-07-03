@@ -10,10 +10,18 @@ router.post(
   auth,
   handleErrorAsync(reviewsController.postReviews)
 );
-// 68.取得評論列表
-router.get("/", auth, handleErrorAsync(reviewsController.getReviews));
 // 69.修改商品評論
 router.put("/:review_id", auth, handleErrorAsync(reviewsController.putReviews));
+
+// 68.取得評論列表
+router.get("/", auth, handleErrorAsync(reviewsController.getReviews));
+// 75.取得評論詳細資料
+router.get(
+  "/:review_id",
+  auth,
+  handleErrorAsync(reviewsController.getReviewsDetail)
+);
+
 // 70.新增商品評論讚
 router.post(
   "/like/:review_id",
@@ -22,7 +30,7 @@ router.post(
 );
 // 71.取消商品評論讚
 router.delete(
-  "/unlike/:review_id",
+  "/like/:review_id",
   auth,
   handleErrorAsync(reviewsController.deleteReviewsLike)
 );

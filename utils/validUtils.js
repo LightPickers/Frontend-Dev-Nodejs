@@ -65,6 +65,13 @@ function isValidStringArray(arr) {
   return arr.every((item) => !isUndefined(item) && isValidString(item));
 }
 
+function isValidArrayOfURL(value) {
+  return (
+    Array.isArray(value) &&
+    value.every((item) => PATTERN_RULE.URL_PATTERN.test(item))
+  );
+}
+
 // 檢查商品是否已收藏/加入購物車
 /*
 async function checkIfProductSaved(targetRepo, userId, productId) {
@@ -218,6 +225,7 @@ module.exports = {
   isValidId,
   isValidBirthDate,
   isValidStringArray,
+  isValidArrayOfURL,
   checkIfProductSaved,
   checkExisted,
   checkListed,
