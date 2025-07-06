@@ -13,6 +13,8 @@ router.post(
 // 69.修改商品評論
 router.put("/:review_id", auth, handleErrorAsync(reviewsController.putReviews));
 
+// 76.取得評論列表
+router.get("/index", handleErrorAsync(reviewsController.getIndexReviews));
 // 68.取得評論列表
 router.get("/", auth, handleErrorAsync(reviewsController.getReviews));
 // 75.取得評論詳細資料
