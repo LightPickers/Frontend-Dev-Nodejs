@@ -205,6 +205,36 @@ async function putReviews(req, res, next) {
   });
 }
 
+// 76.取得首頁評論資料
+async function getIndexReviews(req, res, next) {
+  const indexReviews = await dataSource
+    .getRepository("Reviews")
+    .createQueryBuilder("reviews")
+    .leftJoinAndSelect("reviews.Users", "user")
+    .leftJoinAndSelect("reviews.Products", "product")
+    .select([
+      "reviews.id",
+      "reviews.rating",
+      "reviews.comment",
+      "reviews.is_deleted",
+      "reviews.created_at",
+      "user.photo",
+      "user.email",
+      "product.name",
+    ])
+    .orderBy("reviews.rating", "DESC")
+    .limit(5)
+    .getMany();
+
+  res.status(200).json({
+    status: true,
+    message: "取得首頁評論資料成功",
+    data: {
+      indexReviews,
+    },
+  });
+}
+
 // 68.取得評論列表
 async function getReviews(req, res, next) {
   const { id: user_id } = req.user;
@@ -675,9 +705,10 @@ async function deleteReviews(req, res, next) {
 
 module.exports = {
   postReviews,
+  putReviews,
+  getIndexReviews,
   getReviews,
   getReviewsDetail,
-  putReviews,
   postReviewsLike,
   deleteReviewsLike,
   replyReviews,
