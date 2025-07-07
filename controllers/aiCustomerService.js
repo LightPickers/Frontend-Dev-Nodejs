@@ -67,26 +67,40 @@ async function postAiCustomerService(req, res, next) {
   // console.log(keyword);
 
   let productInfo = "";
-  if (keyword && keyword.length > 0) {
-    const queryBuilder = productRepo.createQueryBuilder("product");
 
-    // 如果 keyword 多筆，用 foreach 逐一查詢
+  if (keyword && keyword.length > 0) {
+    const queryBuilder = productRepo
+      .createQueryBuilder("product")
+      .select([
+        "product.id",
+        "product.name",
+        "product.primary_image",
+        "product.description",
+      ]);
+
+    // 用來放 OR 條件
+    const keywordConditions = [];
+    const params = {};
+
     keyword.forEach((word, index) => {
       const param = `keyword${index}`;
-      const condition = `(product.title LIKE :${param} OR product.subtitle LIKE :${param})`;
-      if (index === 0) {
-        queryBuilder.where(condition, { [param]: `%${word}%` });
-      } else {
-        queryBuilder.orWhere(condition, { [param]: `%${word}%` });
-      }
+      keywordConditions.push(
+        `(product.title LIKE :${param} OR product.subtitle LIKE :${param})`
+      );
+      params[param] = `%${word}%`;
     });
 
-    // 過濾下架商品
+    // 加入關鍵字條件（整個用括號包住）
+    queryBuilder.where(`(${keywordConditions.join(" OR ")})`, params);
+
+    // 過濾 未供應 商品
     queryBuilder.andWhere("product.is_available = :isAvailable", {
       isAvailable: true,
     });
-    queryBuilder.limit(3);
 
+    // 限制最多三筆
+    queryBuilder.limit(3);
+    console.log("🧪 SQL 查詢語句：", queryBuilder.getSql());
     const products = await queryBuilder.getMany();
 
     if (products.length > 0) {
