@@ -222,6 +222,7 @@ async function getIndexReviews(req, res, next) {
       "user.email",
       "product.name",
     ])
+    .andWhere("reviews.is_deleted = :isDeleted", { isDeleted: false })
     .orderBy("reviews.rating", "DESC")
     .limit(5)
     .getMany();
