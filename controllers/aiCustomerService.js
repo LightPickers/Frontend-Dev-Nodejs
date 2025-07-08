@@ -37,26 +37,28 @@ async function postAiCustomerService(req, res, next) {
 
   // 找到或建立 Conversation
   let conversation = await conversationRepo.findOneBy({ user_id });
+  const now = new Date();
 
   if (!conversation) {
-    conversation = conversationRepo.create({
+    const insertResult = await conversationRepo.insert({
       user_id,
-      last_activity: new Date(),
+      last_activity: now,
     });
-    await conversationRepo.save(conversation);
+    conversation = { id: insertResult.identifiers[0].id };
   } else {
-    // 更新最後活動時間
-    conversation.last_activity = new Date();
-    await conversationRepo.save(conversation);
+    await conversationRepo.update(
+      { id: conversation.id },
+      { last_activity: now }
+    );
   }
 
-  // 儲存使用者訊息
-  await messageRepo.save(
+  // 並行儲存使用者訊息
+  const saveUserMessage = messageRepo.save(
     messageRepo.create({
       conversation_id: conversation.id,
       role: "user",
       content: message,
-      sent_at: new Date(),
+      sent_at: now,
     })
   );
 
@@ -98,8 +100,8 @@ async function postAiCustomerService(req, res, next) {
       isAvailable: true,
     });
 
-    // 限制最多三筆
-    queryBuilder.limit(3);
+    // 限制最多 2 筆
+    queryBuilder.limit(2);
     //console.log("🧪 SQL 查詢語句：", queryBuilder.getSql());
     const products = await queryBuilder.getMany();
 
@@ -113,6 +115,8 @@ async function postAiCustomerService(req, res, next) {
     } else {
       productInfo = "目前沒有找到相關商品。";
     }
+
+    await saveUserMessage; // 等待訊息儲存
   }
 
   /*
@@ -145,8 +149,8 @@ async function postAiCustomerService(req, res, next) {
   // console.log("推薦商品：", productInfo);
 
   // 組合完整 prompt，將商品資訊與對話歷史一起帶入
-  const systemContent = `你是拾光堂的專業客服，以文藝、親切的風格回答顧客的問題，並推薦相關攝影器材。`;
-  const userContent = `使用者訊息如下：${message}以下是根據訊息找到的推薦商品清單(格式為 Markdown 圖片連結)：請根據拾光堂商品${productInfo}的資訊、格式，針對用戶訊息推薦商品。每項推薦提供名稱、「商品圖是lightpickers商品頁面超連結的格式」，並附上一句符合用戶訊息的簡短介紹。每項商品以分隔線隔開。若${productInfo}裡沒有，就不推薦。在結尾，請以親切的語氣引導用戶點擊圖片前往商品頁。`;
+  const systemContent = `你是拾光堂的專業客服，以親切的風格回答顧客問題，並推薦相關攝影器材。`;
+  const userContent = `顧客問題如下：${message}。以下是推薦商品資料：${productInfo}請根據顧客問題與商品資料，回覆 Markdown 格式的推薦清單。每項商品包含商品名稱、圖片連結，並附一句簡短推薦，且品項以分隔線隔開。若無資料，就不推薦。結尾時示意點擊圖片前往商品頁。`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
@@ -154,7 +158,8 @@ async function postAiCustomerService(req, res, next) {
       { role: "system", content: systemContent },
       { role: "user", content: userContent },
     ],
-    temperature: 0.7,
+    temperature: 0.3,
+    //max_tokens: 700,
   });
 
   // 取得回應內容
