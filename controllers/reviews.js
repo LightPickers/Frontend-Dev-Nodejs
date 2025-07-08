@@ -212,6 +212,7 @@ async function getIndexReviews(req, res, next) {
     .createQueryBuilder("reviews")
     .leftJoinAndSelect("reviews.Users", "user")
     .leftJoinAndSelect("reviews.Products", "product")
+    .leftJoinAndSelect("product.Conditions", "condition")
     .select([
       "reviews.id",
       "reviews.rating",
@@ -221,6 +222,9 @@ async function getIndexReviews(req, res, next) {
       "user.photo",
       "user.email",
       "product.name",
+      "product.original_price",
+      "product.selling_price",
+      "condition.name",
     ])
     .andWhere("reviews.is_deleted = :isDeleted", { isDeleted: false })
     .orderBy("reviews.rating", "DESC")
@@ -312,6 +316,7 @@ async function getReviews(req, res, next) {
     .createQueryBuilder("reviews")
     .leftJoinAndSelect("reviews.Users", "user")
     .leftJoinAndSelect("reviews.Products", "product")
+    .leftJoinAndSelect("product.Conditions", "condition")
     .leftJoin(
       "Review_likes",
       "likes",
@@ -329,6 +334,9 @@ async function getReviews(req, res, next) {
       "user.photo",
       "user.email",
       "product.name",
+      "product.original_price",
+      "product.selling_price",
+      "condition.name",
     ])
     .addSelect(
       "CASE WHEN likes.id IS NOT NULL THEN true ELSE false END",
@@ -403,29 +411,29 @@ async function getReviewsDetail(req, res, next) {
     );
   }
 
-  const review = await dataSource.getRepository("Reviews").findOne({
-    select: {
-      id: true,
-      rating: true,
-      comment: true,
-      reply: true,
-      likes_count: true,
-      is_deleted: true,
-      created_at: true,
-      Users: {
-        photo: true,
-        email: true,
-      },
-      Products: {
-        name: true,
-      },
-    },
-    where: { id: review_id },
-    relations: {
-      Users: true,
-      Products: true,
-    },
-  });
+  const review = await dataSource
+    .getRepository("Reviews")
+    .createQueryBuilder("review")
+    .leftJoinAndSelect("review.Users", "user")
+    .leftJoinAndSelect("review.Products", "product")
+    .leftJoinAndSelect("product.Conditions", "condition")
+    .where("review.id = :id", { id: review_id })
+    .select([
+      "review.id",
+      "review.rating",
+      "review.comment",
+      "review.reply",
+      "review.likes_count",
+      "review.is_deleted",
+      "review.created_at",
+      "user.email",
+      "user.photo",
+      "product.name",
+      "product.original_price",
+      "product.selling_price",
+      "condition.name",
+    ])
+    .getOne();
 
   // 檢查是否有該筆評論
   if (!review) {
