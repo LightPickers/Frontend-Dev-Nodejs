@@ -100,7 +100,7 @@ async function postAiCustomerService(req, res, next) {
 
     // 限制最多三筆
     queryBuilder.limit(3);
-    console.log("🧪 SQL 查詢語句：", queryBuilder.getSql());
+    //console.log("🧪 SQL 查詢語句：", queryBuilder.getSql());
     const products = await queryBuilder.getMany();
 
     if (products.length > 0) {
@@ -146,7 +146,7 @@ async function postAiCustomerService(req, res, next) {
 
   // 組合完整 prompt，將商品資訊與對話歷史一起帶入
   const systemContent = `你是拾光堂的專業客服，以文藝、親切的風格回答顧客的問題，並推薦相關攝影器材。`;
-  const userContent = `使用者訊息如下：${message}以下是根據訊息找到的推薦商品清單(格式為 Markdown 圖片連結)：請根據拾光堂商品${productInfo}的資訊、格式，針對用戶訊息推薦商品。每項推薦提供名稱、「商品圖是lightpickers商品頁面超連結的格式」，並附上一句符合用戶訊息的簡短介紹。若${productInfo}裡沒有，就不推薦。在結尾，請以親切的語氣引導用戶點擊圖片前往商品頁。`;
+  const userContent = `使用者訊息如下：${message}以下是根據訊息找到的推薦商品清單(格式為 Markdown 圖片連結)：請根據拾光堂商品${productInfo}的資訊、格式，針對用戶訊息推薦商品。每項推薦提供名稱、「商品圖是lightpickers商品頁面超連結的格式」，並附上一句符合用戶訊息的簡短介紹。每項商品以分隔線隔開。若${productInfo}裡沒有，就不推薦。在結尾，請以親切的語氣引導用戶點擊圖片前往商品頁。`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
