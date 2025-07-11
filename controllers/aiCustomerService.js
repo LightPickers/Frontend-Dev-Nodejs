@@ -25,12 +25,6 @@ async function postAiCustomerService(req, res, next) {
     return next(new AppError(400, ERROR_MESSAGES.MESSAGE_LENGTH_TOO_LONG));
   }
 
-  // 禁止不當內容
-  const containsBanned = BANNED_WORDS.some((word) => message.includes(word));
-  if (containsBanned) {
-    return next(new AppError(400, ERROR_MESSAGES.NOT_ENTER_BANNED_WORDS));
-  }
-
   // 取得對話實體
   const conversationRepo = dataSource.getRepository("Conversations");
   const messageRepo = dataSource.getRepository("Messages");
@@ -66,19 +60,13 @@ async function postAiCustomerService(req, res, next) {
   const keyword = extractKeywords(message);
   const productRepo = dataSource.getRepository("Products");
 
-  // console.log(keyword);
-
   let productInfo = "";
+  let productInfoName;
 
   if (keyword && keyword.length > 0) {
     const queryBuilder = productRepo
       .createQueryBuilder("product")
-      .select([
-        "product.id",
-        "product.name",
-        "product.primary_image",
-        "product.description",
-      ]);
+      .select(["product.id", "product.name", "product.primary_image"]);
 
     // 用來放 OR 條件
     const keywordConditions = [];
@@ -100,18 +88,14 @@ async function postAiCustomerService(req, res, next) {
       isAvailable: true,
     });
 
-    // 限制最多 2 筆
-    queryBuilder.limit(2);
-    //console.log("🧪 SQL 查詢語句：", queryBuilder.getSql());
+    // 限制最多 3 筆
+    queryBuilder.limit(3);
     const products = await queryBuilder.getMany();
 
     if (products.length > 0) {
-      productInfo = products
-        .map(
-          (p) =>
-            `- **${p.name}**\n[![商品圖片](${p.primary_image})](https://lightpickers.github.io/Frontend-Dev-React/#/products/${p.id})`
-        )
-        .join("\n\n");
+      productInfo = products;
+      // 整理給 ai 的商品名稱資訊
+      productInfoName = productInfo.map((p) => `商品名稱：${p.name}`);
     } else {
       productInfo = "目前沒有找到相關商品。";
     }
@@ -146,14 +130,15 @@ async function postAiCustomerService(req, res, next) {
   const trimmedHistory = limitedMessages.join("\n");
   */
 
-  // console.log("推薦商品：", productInfo);
-
   // 組合完整 prompt，將商品資訊與對話歷史一起帶入
-  const systemContent = `你是拾光堂的專業客服，以親切的風格回答顧客問題，並推薦相關攝影器材。`;
-  const userContent = `顧客問題如下：${message}。以下是推薦商品資料：${productInfo}請根據顧客問題與商品資料，回覆 Markdown 格式的推薦清單。每項商品包含商品名稱、圖片連結，並附一句簡短推薦，且品項以分隔線隔開。若無資料，就不推薦。結尾時示意點擊圖片前往商品頁。`;
+  const systemContent = `你是親切、專業的攝影器材推薦客服。`;
+  const userContent = `
+    顧客提問：「${message}」
+    以下是推薦商品資料：${productInfoName}
+    請依據商品資料與顧客提問，以自然親切的語氣將商品全部推薦給顧客，內容為商品名稱和一句簡短推薦語。`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
+    model: "gpt-3.5-turbo-1106",
     messages: [
       { role: "system", content: systemContent },
       { role: "user", content: userContent },
@@ -176,9 +161,13 @@ async function postAiCustomerService(req, res, next) {
   );
 
   // 回傳結果
-  res.json({
-    response: assistantReply,
-    user_id,
+  res.status(200).json({
+    status: true,
+    data: {
+      user_id,
+      aiResponse: assistantReply,
+      productInfo,
+    },
   });
 }
 
