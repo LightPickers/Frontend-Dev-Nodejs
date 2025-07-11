@@ -12,16 +12,21 @@ const pino = require("pino");
 //   );
 // };
 
+let logger;
+
 module.exports = function getLogger(prefix, logLevel = "debug") {
-  return pino({
-    level: logLevel,
-    transport: {
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-        messageFormat: `[${prefix}]: {msg}`,
-        translateTime: "yyyy-mm-dd HH:MM:ss",
+  if (!logger) {
+    logger = pino({
+      level: logLevel,
+      transport: {
+        target: "pino-pretty",
+        options: {
+          colorize: true,
+          messageFormat: `[${prefix}]: {msg}`,
+          translateTime: "yyyy-mm-dd HH:MM:ss",
+        },
       },
-    },
-  });
+    });
+  }
+  return logger;
 };
