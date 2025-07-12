@@ -25,38 +25,34 @@ async function postAiCustomerService(req, res, next) {
     return next(new AppError(400, ERROR_MESSAGES.MESSAGE_LENGTH_TOO_LONG));
   }
 
-  // 禁止不當內容
-  const containsBanned = BANNED_WORDS.some((word) => message.includes(word));
-  if (containsBanned) {
-    return next(new AppError(400, ERROR_MESSAGES.NOT_ENTER_BANNED_WORDS));
-  }
-
   // 取得對話實體
   const conversationRepo = dataSource.getRepository("Conversations");
   const messageRepo = dataSource.getRepository("Messages");
 
   // 找到或建立 Conversation
   let conversation = await conversationRepo.findOneBy({ user_id });
+  const now = new Date();
 
   if (!conversation) {
-    conversation = conversationRepo.create({
+    const insertResult = await conversationRepo.insert({
       user_id,
-      last_activity: new Date(),
+      last_activity: now,
     });
-    await conversationRepo.save(conversation);
+    conversation = { id: insertResult.identifiers[0].id };
   } else {
-    // 更新最後活動時間
-    conversation.last_activity = new Date();
-    await conversationRepo.save(conversation);
+    await conversationRepo.update(
+      { id: conversation.id },
+      { last_activity: now }
+    );
   }
 
-  // 儲存使用者訊息
-  await messageRepo.save(
+  // 並行儲存使用者訊息
+  const saveUserMessage = messageRepo.save(
     messageRepo.create({
       conversation_id: conversation.id,
       role: "user",
       content: message,
-      sent_at: new Date(),
+      sent_at: now,
     })
   );
 
@@ -64,19 +60,13 @@ async function postAiCustomerService(req, res, next) {
   const keyword = extractKeywords(message);
   const productRepo = dataSource.getRepository("Products");
 
-  // console.log(keyword);
-
   let productInfo = "";
+  let productInfoName;
 
   if (keyword && keyword.length > 0) {
     const queryBuilder = productRepo
       .createQueryBuilder("product")
-      .select([
-        "product.id",
-        "product.name",
-        "product.primary_image",
-        "product.description",
-      ]);
+      .select(["product.id", "product.name", "product.primary_image"]);
 
     // 用來放 OR 條件
     const keywordConditions = [];
@@ -98,21 +88,19 @@ async function postAiCustomerService(req, res, next) {
       isAvailable: true,
     });
 
-    // 限制最多三筆
+    // 限制最多 3 筆
     queryBuilder.limit(3);
-    console.log("🧪 SQL 查詢語句：", queryBuilder.getSql());
     const products = await queryBuilder.getMany();
 
     if (products.length > 0) {
-      productInfo = products
-        .map(
-          (p) =>
-            `- **${p.name}**\n[![商品圖片](${p.primary_image})](https://lightpickers.github.io/Frontend-Dev-React/#/products/${p.id})`
-        )
-        .join("\n\n");
+      productInfo = products;
+      // 整理給 ai 的商品名稱資訊
+      productInfoName = productInfo.map((p) => `商品名稱：${p.name}`);
     } else {
       productInfo = "目前沒有找到相關商品。";
     }
+
+    await saveUserMessage; // 等待訊息儲存
   }
 
   /*
@@ -142,19 +130,21 @@ async function postAiCustomerService(req, res, next) {
   const trimmedHistory = limitedMessages.join("\n");
   */
 
-  // console.log("推薦商品：", productInfo);
-
   // 組合完整 prompt，將商品資訊與對話歷史一起帶入
-  const systemContent = `你是拾光堂的專業客服，以文藝、親切的風格回答顧客的問題，並推薦相關攝影器材。`;
-  const userContent = `使用者訊息如下：${message}以下是根據訊息找到的推薦商品清單(格式為 Markdown 圖片連結)：請根據拾光堂商品${productInfo}的資訊、格式，針對用戶訊息推薦商品。每項推薦提供名稱、「商品圖是lightpickers商品頁面超連結的格式」，並附上一句符合用戶訊息的簡短介紹。若${productInfo}裡沒有，就不推薦。在結尾，請以親切的語氣引導用戶點擊圖片前往商品頁。`;
+  const systemContent = `你是親切、專業的攝影器材推薦客服。`;
+  const userContent = `
+    顧客提問：「${message}」
+    以下是推薦商品資料：${productInfoName}
+    請依據商品資料與顧客提問，以自然親切的語氣將商品全部推薦給顧客，內容為排序編號、**商品名稱**和一句簡短推薦語。`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
+    model: "gpt-3.5-turbo-1106",
     messages: [
       { role: "system", content: systemContent },
       { role: "user", content: userContent },
     ],
-    temperature: 0.7,
+    temperature: 0.3,
+    //max_tokens: 700,
   });
 
   // 取得回應內容
@@ -171,9 +161,13 @@ async function postAiCustomerService(req, res, next) {
   );
 
   // 回傳結果
-  res.json({
-    response: assistantReply,
-    user_id,
+  res.status(200).json({
+    status: true,
+    data: {
+      user_id,
+      aiResponse: assistantReply,
+      productInfo,
+    },
   });
 }
 
