@@ -135,7 +135,7 @@ async function postAiCustomerService(req, res, next) {
   const userContent = `
     顧客提問：「${message}」
     以下是推薦商品資料：${productInfoName}
-    請依據商品資料與顧客提問，以自然親切的語氣將商品全部推薦給顧客，內容為商品名稱和一句簡短推薦語。`;
+    請依據商品資料與顧客提問，以自然親切的語氣將商品全部推薦給顧客，內容為排序編號、**商品名稱**和一句簡短推薦語。`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-3.5-turbo-1106",
