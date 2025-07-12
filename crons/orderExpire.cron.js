@@ -65,8 +65,8 @@ async function fallbackCancelExpiredOrders() {
   }
 }
 
-// 每 20 分鐘執行一次
-cron.schedule("*/20 * * * *", async () => {
+// 每 10 分鐘執行一次
+cron.schedule("*/10 * * * *", async () => {
   try {
     if (isRedisConnected()) {
       logger.info("每 20 分鐘使用 Redis 排程 檢查是否有過期訂單");

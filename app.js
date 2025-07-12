@@ -3,7 +3,7 @@ const path = require("path");
 const cors = require("cors");
 const pinoHttp = require("pino-http");
 const logger = require("./utils/logger")("App");
-// require("./crons/orderExpire.cron.js");
+require("./crons/orderExpire.cron.js");
 
 const usersRouter = require("./routes/users");
 const emailRouter = require("./routes/email");
