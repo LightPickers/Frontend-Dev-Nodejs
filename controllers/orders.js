@@ -15,6 +15,43 @@ const {
 const AppError = require("../utils/appError");
 const ERROR_MESSAGES = require("../utils/errorMessages");
 
+class OrderController {
+  constructor(orderService) {
+    this.orderService = orderService;
+  }
+
+  postOrder = async (req, res, next) => {
+    try {
+      const { id: user_id } = req.user;
+      const { cart_ids } = req.body;
+
+      const htmlForm = await this.orderService.createOrder(user_id, cart_ids);
+      res.status(200).type("html").send(htmlForm);
+    } catch (err) {
+      next(err instanceof AppError ? err : new AppError(500, "建立訂單失敗"));
+    }
+  };
+
+  postPendingOrder = async (req, res, next) => {
+    try {
+      const { id: user_id } = req.user;
+      const { order_id } = req.params;
+
+      const htmlForm = await this.orderService.getPendingOrder(
+        user_id,
+        order_id
+      );
+      res.status(200).type("html").send(htmlForm);
+    } catch (err) {
+      next(
+        err instanceof AppError ? err : new AppError(500, "取得待付款訂單失敗")
+      );
+    }
+  };
+}
+
+module.exports = OrderController;
+
 async function postOrder(req, res, next) {
   const { id: userId } = req.user;
   const { cart_ids } = req.body;
@@ -296,125 +333,3 @@ async function getAllOrders(req, res, next) {
     data: orders,
   });
 }
-
-async function getPaidOrder(req, res, next) {
-  const { order_id } = req.params;
-  const { is_banned } = req.user;
-
-  // 檢查用戶是否有權限
-  if (is_banned) {
-    logger.warn(ERROR_MESSAGES.NOT_AUTHORIZED_FOR_ORDER);
-    return next(new AppError(403, ERROR_MESSAGES.NOT_AUTHORIZED_FOR_ORDER));
-  }
-
-  // 檢查資料庫有無此訂單
-  const orderRepo = dataSource.getRepository("Orders");
-  const order = await orderRepo.findOneBy({ id: order_id });
-  if (!order) {
-    logger.warn(`訂單${ERROR_MESSAGES.DATA_NOT_FOUND}`);
-    return next(new AppError(404, `訂單${ERROR_MESSAGES.DATA_NOT_FOUND}`));
-  }
-
-  res.status(200).json({
-    status: true,
-    message: "訂單取得成功",
-    data: {
-      id: order.id,
-      user_id: order.user_id,
-      merchant_order_no: order.merchant_order_no,
-      status: order.status,
-      amount: order.amount,
-      created_at: order.created_at,
-    },
-  });
-}
-
-async function postPendingOrder(req, res, next) {
-  const { id: userId } = req.user;
-  const { order_id } = req.params;
-
-  const userRepo = dataSource.getRepository("Users");
-  const productRepo = dataSource.getRepository("Products");
-  const orderItemsRepo = dataSource.getRepository("Order_items");
-
-  // 取得訂單商品 product_id
-  const orderItems = await orderItemsRepo.find({
-    select: ["product_id"],
-    where: { order_id },
-  });
-
-  const productIds = orderItems
-    .map((item) => item.product_id) // 訂單項目裡 所有的 product_id
-    .filter((id) => isValidString(id) && id.length > 0);
-
-  // 查詢所有對應商品的 is_available 狀態
-  const products = await productRepo.find({
-    select: ["id", "is_available"],
-    where: { id: In(productIds) },
-  });
-
-  const unavailableProducts = products.filter(
-    (product) => !product.is_available
-  );
-
-  // 檢查是否有不可用商品
-  if (unavailableProducts.length > 0) {
-    const unavailableIds = unavailableProducts.map((p) => p.id);
-    logger.warn(`以下商品目前已無庫存: ${unavailableIds.join(", ")}`);
-    return next(
-      new AppError(400, `以下商品目前已無庫存: ${unavailableIds.join(", ")}`)
-    );
-  }
-
-  // 取出 待付款 商品訂單
-  const query = dataSource
-    .getRepository("Orders")
-    .createQueryBuilder("order")
-    .innerJoin("Order_items", "item", "item.order_id = order.id")
-    .where("order.user_id = :userId", { userId })
-    .andWhere("order.status = :status", { status: "pending" });
-
-  if (productIds.length > 0) {
-    query.andWhere("item.product_id IN (:...productIds)", { productIds });
-  }
-  const pendingOrder = await query.getOne();
-
-  // 判斷是否有該筆 待付款訂單
-  if (!pendingOrder) {
-    logger.warn(`待付款訂單 ${ERROR_MESSAGES.DATA_NOT_FOUND}`);
-    return next(
-      new AppError(404, `待付款訂單 ${ERROR_MESSAGES.DATA_NOT_FOUND}`)
-    );
-  }
-
-  const user = await userRepo.findOne({
-    select: ["email"],
-    where: { id: userId },
-  });
-  const product = await productRepo.findOne({
-    select: ["name"],
-    where: { id: productIds[0] },
-  });
-
-  // 回傳給藍新的 htmlform
-  const { html, merchantOrderNo } = generateNewebpayForm(
-    pendingOrder,
-    product.name,
-    user.email,
-    productIds.length
-  );
-
-  // 更新 pendingOrder 的 merchant_order_no 為此時的時間戳
-  pendingOrder.merchant_order_no = merchantOrderNo;
-  await dataSource.getRepository("Orders").save(pendingOrder);
-
-  return res.status(200).type("html").send(html);
-}
-
-module.exports = {
-  postOrder,
-  getOrder,
-  getAllOrders,
-  getPaidOrder,
-  postPendingOrder,
-};
